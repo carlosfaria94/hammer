@@ -1,4 +1,6 @@
 py3eth
+contract-abi.json
+contract-address.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -2,21 +2,23 @@
 """
 @summary: settings
 """
+# The node that broadcast the transactions (send.py)
+RPC_NODE_BROADCAST = 'http://localhost:8550'
+# The node that watch the transactions (tps.py)
+RPC_NODE_WATCH = 'http://localhost:8550'
 
-RPCaddress = 'http://localhost:8550'
-RPCaddress2 = 'http://localhost:8550'
+MNEMONIC = "about hair goose output senior short stone decade lock loop kidney beach"
 
 TIMEOUT_DEPLOY = 300
 
 # submit transaction via web3 or directly via RPC
 ROUTE = "web3"  # "web3" "RPC"
 
-# gas given for .set(x) transaction
-# N.B.: must be different from (i.e. higher than) the eventually used gas in
-# a successful transaction; because difference is used as sign for a FAILED
-# transaction in the case of those clients which do not have a
-# 'transactionReceipt.status' field yet
-GAS_FOR_SET_CALL = 90000
+GAS = 4700000
+GAS_PRICE = 20000000000
+
+CHAIN_ID = 2019  # Network or chain id
+NETWORK_ID = 2019
 
 # contract files:
 FILE_CONTRACT_SOURCE = "contract.sol"

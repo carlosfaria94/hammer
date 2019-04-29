@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-@summary: deploy contract
+@summary: deploy a simple storage contract
 """
 
 import sys
@@ -9,7 +9,7 @@ import json
 import requests  # pip3 install requests
 
 try:
-    from web3 import Web3, HTTPProvider  # pip3 install web3
+    from web3 import Web3, Account, HTTPProvider  # pip3 install web3
     from solc import compile_source  # pip install py-solc
 except:
     print("Dependencies unavailable. Start virtualenv first!")
@@ -20,11 +20,8 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPCaddress, TIMEOUT_DEPLOY
-from hammer.config import FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS
-from hammer.config import GAS_FOR_SET_CALL
-
-from hammer.client_tools import web3_connection, unlockAccount
+from hammer.config import RPC_NODE_BROADCAST, TIMEOUT_DEPLOY, FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
+from hammer.utils import web3_connection
 
 
 def compile_contract(contract_source_file):
@@ -47,8 +44,20 @@ def deploy_contract(contract_interface, ifPrint=True, timeout=TIMEOUT_DEPLOY):
     # Instantiate and deploy contract
     storage_contract = w3.eth.contract(abi=contract_interface['abi'],
                                        bytecode=contract_interface['bin'])
-    # Submit the transaction that deploys the contract
-    tx_hash = w3.toHex(storage_contract.constructor().transact())
+    nonce = w3.eth.getTransactionCount(
+        '0x8717eD44cEB53f15dB9CF1bEc75a037A70232AC8')
+    contract_tx = storage_contract.constructor().buildTransaction({
+        'gas': GAS,
+        'gasPrice': GAS_PRICE,
+        'nonce': nonce,
+        'chainId': CHAIN_ID
+    })
+    key = '0xdde94897e9e4f787f6360552a4a723d06b0c730da77c30ce2d4cda61f94e187f'
+    print('contract_tx', contract_tx)
+    signed = Account.signTransaction(contract_tx, key)
+    print('signed', signed)
+    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
+
     print("tx_hash = ", tx_hash,
           "--> waiting for receipt (timeout=%d) ..." % timeout)
     sys.stdout.flush()
@@ -91,13 +100,12 @@ def compile_deploy_save(contract_source_file):
     compile, deploy, save
     """
     contract_name, contract_interface = compile_contract(contract_source_file)
-    print("unlock: ", unlockAccount())
     contract_address = deploy_contract(contract_interface)
     save_to_disk(contract_address, abi=contract_interface["abi"])
     return contract_name, contract_interface, contract_address
 
 
-def test_smart_contract(storage_contract, gasForSetCall=GAS_FOR_SET_CALL):
+def test_smart_contract(storage_contract, gasForSetCall=GAS):
     """
     just a test if the storage_contract's methods are working
     --> call getter then setter then getter  
@@ -126,9 +134,8 @@ def test_smart_contract(storage_contract, gasForSetCall=GAS_FOR_SET_CALL):
 
 
 if __name__ == '__main__':
-    global w3, NODENAME, NODETYPE, NODEVERSION, CONSENSUS, NETWORKID, CHAINNAME, CHAINID
-    w3, chainInfos = web3_connection(RPCaddress=RPCaddress, account=None)
-    NODENAME, NODETYPE, NODEVERSION, CONSENSUS, NETWORKID, CHAINNAME, CHAINID = chainInfos
+    global w3
+    w3 = web3_connection(RPCaddress=RPC_NODE_BROADCAST)
 
     compile_deploy_save(contract_source_file=FILE_CONTRACT_SOURCE)
 

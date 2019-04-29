@@ -5,17 +5,21 @@
 
 import time, timeit, sys, os, json
 
-from web3 import Web3, HTTPProvider
+try:
+    from web3 import Web3, HTTPProvider
+except:
+    print("Dependencies unavailable. Start virtualenv first!")
+    exit()
 
 # extend path for imports:
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-    
-from hammer.config import RPCaddress2, FILE_LAST_EXPERIMENT, AUTOSTOP_TPS, EMPTY_BLOCKS_AT_END
+
+from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT, AUTOSTOP_TPS, EMPTY_BLOCKS_AT_END
 from hammer.deploy import load_from_disk, FILE_CONTRACT_ADDRESS
-from hammer.client_tools import web3_connection, getBlockTransactionCount
-    
+from hammer.utils import web3_connection, get_block_transaction_count
+
 
 def loopUntil_NewContract(query_intervall = 0.1):
     """
@@ -46,7 +50,7 @@ def loopUntil_NewContract(query_intervall = 0.1):
 
 
 
-def timestampToSeconds(timestamp, NODENAME, CONSENSUS):
+def timestampToSeconds(timestamp):
     """
     turn timestamp into (float of) seconds
     as a separate function so that it can be recycled in blocksDB_create.py
@@ -64,15 +68,15 @@ def analyzeNewBlocks(blockNumber, newBlockNumber, txCount, start_time, peakTpsAv
     
     txCount_new = 0
     for bl in range(blockNumber+1, newBlockNumber+1): # TODO check range again - shift by one? 
-        # txCount_new += w3.eth.getBlockTransactionCount(bl)
-        blktx = getBlockTransactionCount(w3, bl)
+        # txCount_new += w3.eth.get_block_transaction_count(bl)
+        blktx = get_block_transaction_count(w3, bl)
         txCount_new += blktx # TODO
 
     ts_blockNumber =    w3.eth.getBlock(   blockNumber).timestamp
     ts_newBlockNumber = w3.eth.getBlock(newBlockNumber).timestamp
     ts_diff = ts_newBlockNumber - ts_blockNumber
     
-    blocktimeSeconds = timestampToSeconds(ts_diff, NODENAME, CONSENSUS) 
+    blocktimeSeconds = timestampToSeconds(ts_diff) 
 
     try:
         tps_current = txCount_new / blocktimeSeconds
@@ -163,8 +167,8 @@ def measurement(blockNumber, pauseBetweenQueries=0.3,
     # the block we had been waiting for already contains the first transaction/s
     # N.B.: slight inaccurracy of time measurement, because not measured how long those needed
     
-    # txCount=w3.eth.getBlockTransactionCount(blockNumber)
-    txCount=getBlockTransactionCount(w3, blockNumber)
+    # txCount=w3.eth.get_block_transaction_count(blockNumber)
+    txCount=get_block_transaction_count(w3, blockNumber)
     
     start_time = timeit.default_timer()
     start_epochtime = time.time()
@@ -199,18 +203,9 @@ def measurement(blockNumber, pauseBetweenQueries=0.3,
         if AUTOSTOP_TPS and sendingEndedFiledate()!=whenBefore:
             print ("Received signal from send.py = updated INFOFILE.")
             block_last = readInfofile()['send']['block_last']
-            
             # finalTpsAv = tpsAv[block_last]
             finalTpsAv = getNearestEntry(myDict=tpsAv, myIndex=block_last)
-            
             break
-            # finalTpsAv = tpsAv
-            # blocknumberEnd = newBlockNumber + empty_blocks_at_end
-            # print ("The end is nigh ... after blocknumber", blocknumberEnd)
-            # if NODETYPE=="TestRPC":
-            #     break # no empty blocks in TestRPC
-        # if blocknumberEnd>0 and newBlockNumber > blocknumberEnd:
-            # break
 
         time.sleep(pauseBetweenQueries) # do not query too often; as little side effect on node as possible
 
@@ -233,10 +228,8 @@ def addMeasurementToFile(peakTpsAv, finalTpsAv, start_epochtime, fn=FILE_LAST_EX
         
         
 if __name__ == '__main__':
-    
-    global w3, NODENAME, NODETYPE, NODEVERSION, CONSENSUS, NETWORKID, CHAINNAME, CHAINID
-    w3, chainInfos = web3_connection(RPCaddress=RPCaddress2, account=None)
-    NODENAME, NODETYPE, NODEVERSION, CONSENSUS, NETWORKID, CHAINNAME, CHAINID = chainInfos
+    global w3
+    w3 = web3_connection(RPCaddress=RPC_NODE_WATCH)
     
     blockNumber_before = w3.eth.blockNumber
     print ("\nBlock ",blockNumber_before," - waiting for something to happen") 

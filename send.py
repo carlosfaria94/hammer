@@ -12,23 +12,19 @@ import sys, time, random, json
 from threading import Thread
 from queue import Queue
 
-import requests # pip3 install requests
-import web3
-from web3 import Web3, HTTPProvider # pip3 install web3
-from web3.utils.abi import filter_by_name, abi_to_signature
-from web3.utils.encoding import pad_hex
+try:
+    import requests # pip3 install requests
+    import web3
+    from web3 import Web3, HTTPProvider # pip3 install web3
+    from web3.utils.abi import filter_by_name, abi_to_signature
+    from web3.utils.encoding import pad_hex
+except:
+    print("Dependencies unavailable. Start virtualenv first!")
+    exit()
 
-from hammer.config import RPCaddress, ROUTE
-from hammer.config import GAS_FOR_SET_CALL
-from hammer.config import FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
+from hammer.config import RPC_NODE_BROADCAST, ROUTE, GAS, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
 from hammer.deploy import load_from_disk
-
-from hammer.client_tools import web3_connection, unlockAccount
-
-
-##########################
-## smart contract related:
-
+from hammer.utils import web3_connection
 
 def initialize_fromAddress():
     """
@@ -40,7 +36,7 @@ def initialize_fromAddress():
     return myContract
     
 
-def contract_set_via_web3(contract, arg, hashes = None, gas=GAS_FOR_SET_CALL):
+def contract_set_via_web3(contract, arg, hashes = None, gas=GAS):
     """
     call the .set(arg) method
     using the web3 method 
@@ -49,7 +45,6 @@ def contract_set_via_web3(contract, arg, hashes = None, gas=GAS_FOR_SET_CALL):
                     'gas' : gas}
         
     tx = contract.functions.set( x=arg ).transact(txParameters)
-    # print ("[sent via web3]", end=" ")  # TODO: not print this here but at start
     print (".", end=" ")  # TODO: not print this here but at start
     tx = w3.toHex(tx)
     
@@ -118,7 +113,7 @@ def timeit_argument_encoding():
     print ("Doing that %d times ... took %.2f seconds" % (reps, timer) )
 
 
-def contract_set_via_RPC(contract, arg, hashes = None, gas=GAS_FOR_SET_CALL):
+def contract_set_via_RPC(contract, arg, hashes = None, gas=GAS):
     """
     call the .set(arg) method numTx=10
     not going through web3
@@ -315,7 +310,7 @@ def many_transactions_threaded_in_batches(contract, numTx, batchSize=25):
 ################################################################
 
 
-def hasTxSucceeded(tx_receipt): #, gasGiven=GAS_FOR_SET_CALL):
+def hasTxSucceeded(tx_receipt):
     
     # txReceipt.status or None
     status = tx_receipt.get("status", None) 
@@ -510,14 +505,7 @@ def store_experiment_data(success, num_txs,
                 },
             "node" : {
                 "rpc_address": RPCaddress,
-                "web3.version.node": w3.version.node,
-                "name" : NODENAME,
-                "type" : NODETYPE,
-                "version" : NODEVERSION, 
-                "consensus" : CONSENSUS, 
-                "network_id" : NETWORKID, 
-                "chain_name" : CHAINNAME, 
-                "chain_id" : CHAINID
+                "web3.version.node": w3.version.node
                 }
             }
             
@@ -553,34 +541,17 @@ def finish(txs, success):
     txt = txt % (block_from, block_to)
     print (txt)
     
-    if NODETYPE=="TestRPC" or (NODENAME=="Parity" and CHAINNAME=="developmentchain" and NETWORKID==17):
-        print ("Do not wait for empty blocks, as this is TestRPC, or parity instantseal.")
-        waitBlocks=0
-    else:
-        waitBlocks=EMPTY_BLOCKS_AT_END
-        wait_some_blocks(waitBlocks)
+    wait_some_blocks()
     
-    store_experiment_data (success, len(txs), block_from, block_to, empty_blocks=waitBlocks)
-    # print ("Data stored. This will trigger tps.py to end in ~ %d blocks." % EMPTY_BLOCKS_AT_END)
+    store_experiment_data(success, len(txs), block_from, block_to, empty_blocks=waitBlocks)
     
     print ("Data stored. This will trigger tps.py to end.\n"
            "(Beware: Wait ~0.5s until tps.py stops and writes to same file.)")
-    #          see tps.py --> pauseBetweenQueries=0.3
 
-
-################################################################################
-###
-### choose, depending on CLI parameter
-###
-################################################################################
-
-def check_CLI_or_syntax_info_and_exit():
+def check_argv():
     """
     before anything, check if number of parameters is fine, or print syntax instructions
-    """
-    
-    #print ("len(sys.argv)=", len(sys.argv))
-    
+    """    
     if not (2 <= len(sys.argv) <= 4):
         print ("Needs parameters:")
         print ("%s numTransactions algorithm [workers]" % sys.argv[0])
@@ -644,13 +615,11 @@ def sendmany(contract):
 
 
 if __name__ == '__main__':
-    
-    check_CLI_or_syntax_info_and_exit()
+    check_argv()
 
-    global w3, NODENAME, NODETYPE, NODEVERSION, CONSENSUS, NETWORKID, CHAINNAME, CHAINID
-    w3, chainInfos = web3_connection(RPCaddress=RPCaddress, account=None)
-    NODENAME, NODETYPE, NODEVERSION, CONSENSUS, NETWORKID, CHAINNAME, CHAINID = chainInfos
-    
+    global w3
+    w3 = web3_connection(RPCaddress=RPC_NODE_BROADCAST)
+
     # wait_some_blocks(0); exit()
     # timeit_argument_encoding(); exit()
     # try_contract_set_via_web3(contract); exit()
