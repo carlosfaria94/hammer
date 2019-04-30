@@ -2,17 +2,14 @@
 """
 @summary: settings
 """
-# The node that broadcast the transactions (send.py)
-RPC_NODE_BROADCAST = 'http://localhost:8550'
-# The node that watch the transactions (tps.py)
+# The node that send the transactions (send.py)
+RPC_NODE_SEND = 'http://localhost:8550'
+# The node that watch the transactions (watch_tps.py)
 RPC_NODE_WATCH = 'http://localhost:8550'
 
 MNEMONIC = "about hair goose output senior short stone decade lock loop kidney beach"
 
 TIMEOUT_DEPLOY = 300
-
-# submit transaction via web3 or directly via RPC
-ROUTE = "web3"  # "web3" "RPC"
 
 GAS = 4700000
 GAS_PRICE = 20000000000
@@ -31,7 +28,7 @@ FILE_PASSPHRASE = "account-passphrase.txt"
 # last experiment data
 FILE_LAST_EXPERIMENT = "last-experiment.json"
 
-# if True, the newly written file FILE_LAST_EXPERIMENT is going to stop the loop in tps.py
+# if True, the newly written file FILE_LAST_EXPERIMENT is going to stop the loop in watch_tps.py
 AUTOSTOP_TPS = True
 
 # after last txs have been mined, give 10 more blocks before experiment ends

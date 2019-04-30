@@ -20,8 +20,8 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPC_NODE_BROADCAST, TIMEOUT_DEPLOY, FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
-from hammer.utils import web3_connection
+from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
+from hammer.utils import init_web3
 
 
 def compile_contract(contract_source_file):
@@ -53,9 +53,7 @@ def deploy_contract(contract_interface, ifPrint=True, timeout=TIMEOUT_DEPLOY):
         'chainId': CHAIN_ID
     })
     key = '0xdde94897e9e4f787f6360552a4a723d06b0c730da77c30ce2d4cda61f94e187f'
-    print('contract_tx', contract_tx)
-    signed = Account.signTransaction(contract_tx, key)
-    print('signed', signed)
+    signed = Account.signTransaction(contract_tx, private_key=key)
     tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
     print("tx_hash = ", tx_hash,
@@ -105,42 +103,7 @@ def compile_deploy_save(contract_source_file):
     return contract_name, contract_interface, contract_address
 
 
-def test_smart_contract(storage_contract, gasForSetCall=GAS):
-    """
-    just a test if the storage_contract's methods are working
-    --> call getter then setter then getter  
-    """
-
-    # get
-    first_answer = storage_contract.functions.get().call()
-    print('.get(): {}'.format(first_answer))
-
-    # set
-    print('.set()')
-    param = {'from': w3.eth.defaultAccount,
-             'gas': gasForSetCall}
-    tx = storage_contract.functions.set(first_answer + 1).transact(param)
-    tx_hash = w3.toHex(tx)
-    print("transaction", tx_hash, "... ")
-    sys.stdout.flush()
-    tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    print("... mined. Receipt --> gasUsed={gasUsed}". format(**tx_receipt))
-
-    # get
-    second_answer = storage_contract.functions.get().call()
-    print('.get(): {}'.format(second_answer))
-
-    return first_answer, tx_receipt, second_answer
-
-
 if __name__ == '__main__':
     global w3
-    w3 = web3_connection(RPCaddress=RPC_NODE_BROADCAST)
-
+    w3 = init_web3(RPCaddress=RPC_NODE_SEND)
     compile_deploy_save(contract_source_file=FILE_CONTRACT_SOURCE)
-
-    # argument "test" runs the .set() test transaction
-    if len(sys.argv) > 1 and sys.argv[1] == "andtests":
-        contract_address, abi = load_from_disk()
-        contract = contract_object(contract_address, abi)
-        test_smart_contract(contract)

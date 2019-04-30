@@ -12,11 +12,11 @@ import time
 
 from requests import ConnectionError
 
-from hammer.config import RPC_NODE_BROADCAST
+from hammer.config import RPC_NODE_SEND
 from hammer.utils import curl_post, MethodNotExistentError
 
 
-def simple_RPC_call(RPCaddress=RPC_NODE_BROADCAST, method="web3_clientVersion"):
+def simple_RPC_call(RPCaddress=RPC_NODE_SEND, method="web3_clientVersion"):
     """
     calls simplemost RPC call 'web3_clientVersion' and checks answer.
     returns (BOOL success, STRING/None error) 
@@ -38,7 +38,7 @@ def simple_RPC_call(RPCaddress=RPC_NODE_BROADCAST, method="web3_clientVersion"):
     return success, error
 
 
-def loop_until_is_up(seconds_between_calls=0.5, ifPrint=False, timeout=20):
+def loop_until_is_up(seconds_between_calls=0.5, timeout=20):
     """
     endless loop, until RPC API call answers something
     """
@@ -46,8 +46,7 @@ def loop_until_is_up(seconds_between_calls=0.5, ifPrint=False, timeout=20):
 
     while True:
         success, error = simple_RPC_call()
-        if ifPrint:
-            print(success, error)
+        print('success?', success, '\nerror?', error)
         if success:
             break
         if timeout:
@@ -59,4 +58,4 @@ def loop_until_is_up(seconds_between_calls=0.5, ifPrint=False, timeout=20):
 
 
 if __name__ == '__main__':
-    loop_until_is_up(ifPrint=True)
+    loop_until_is_up()

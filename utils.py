@@ -4,6 +4,7 @@ import sys
 
 try:
     from web3 import Web3, HTTPProvider  # pip3 install web3
+    import requests
 except:
     print("Dependencies unavailable. Start virtualenv first!")
     exit()
@@ -35,21 +36,13 @@ def print_versions():
                                                                   pysolcversion, get_solc_version(), sys.version.replace("\n", "")))
 
 
-def web3_connection(RPCaddress=None):
+def init_web3(RPCaddress=None):
     print_versions()
     w3 = Web3(HTTPProvider(RPCaddress, request_kwargs={'timeout': 120}))
     print("web3 connection established, blockNumber =",
           w3.eth.blockNumber, end=", ")
     print("node version string = ", w3.version.node)
     return w3
-
-
-def get_block_transaction_count(w3, blockNumber):
-    """
-    testRPC does not provide this endpoint yet, so replicate its functionality:
-    """
-    block = w3.eth.getBlock(blockNumber)
-    return len(block["transactions"])
 
 
 def curl_post(method, txParameters=None, RPCaddress=None, ifPrint=False):
@@ -74,6 +67,20 @@ def curl_post(method, txParameters=None, RPCaddress=None, ifPrint=False):
         return response_json['result']
 
 
+def file_date(file):
+    try:
+        when = os.path.getmtime(file)
+    except FileNotFoundError:
+        when = 0
+    return when
+
+
+def read(file):
+    with open(file, "r") as f:
+        data = json.load(f)
+    return data
+
+
 if __name__ == '__main__':
     global w3
-    w3 = web3_connection(RPCaddress=None)
+    w3 = init_web3(RPCaddress=None)
