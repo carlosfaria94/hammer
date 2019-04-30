@@ -122,42 +122,15 @@ def many_transactions_threaded_queue(contract, num_tx, num_worker_threads, nonce
     
     return txs
 
-################################################################
-### 
-### control sample: have the transactions been SUCCESSFUL ?
-###
-################################################################
-
-
 def has_tx_succeeded(tx_receipt):
-    # txReceipt.status or None
+    """
+    We check tx has succeeded by reading the `status` on the `tx_receipt`
+    More info: https://docs.pantheon.pegasys.tech/en/latest/Reference/JSON-RPC-API-Objects/#transaction-receipt-object
+    """
     status = tx_receipt.get("status", None)
-    print('Has tx succeeded?', status)
-    if status == 1:  # clear answer = transaction succeeded!
+    if status == 1:
         return True
-    if status == 0:  # clear answer = transaction failed!
-        return False
-
-    # unfortunately not all clients support status field yet (e.g. testrpc-py, quorum)
-     
-    # second way is to compare gasGiven with gasUsed:
-    tx_hash=tx_receipt.transactionHash
-    gasGiven = w3.eth.getTransaction(tx_hash)["gas"]
-    gasLeftOver = tx_receipt.gasUsed < gasGiven
-    
-    if not gasLeftOver:
-        # many types of transaction failures result in all given gas being used up
-        # e.g. a failed assert() in solidity leads to all gas used up
-        # Then it's clear = transaction failed!
-        return False 
-    
-    if gasLeftOver:
-        # THIS is the dangerous case, because 
-        # e.g. solidity throw / revert() / require() are also returning some unused gas!
-        # As well as SUCCESSFUL transactions are returning some gas!
-        # But for clients without the status field, this is the only indicator, so:
-        return True
-
+    return False
 
 def get_receipt(tx_hash, timeout, results):
     try:

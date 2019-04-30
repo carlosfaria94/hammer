@@ -36,7 +36,7 @@ def compile_contract(contract_source_file):
     return contract_name, contract_interface
 
 
-def deploy_contract(contract_interface, ifPrint=True, timeout=TIMEOUT_DEPLOY):
+def deploy_contract(contract_interface, timeout=TIMEOUT_DEPLOY):
     """
     deploys contract, waits for receipt, returns address
     """
@@ -53,20 +53,24 @@ def deploy_contract(contract_interface, ifPrint=True, timeout=TIMEOUT_DEPLOY):
         'chainId': CHAIN_ID
     })
     key = '0xdde94897e9e4f787f6360552a4a723d06b0c730da77c30ce2d4cda61f94e187f'
-    signed = Account.signTransaction(contract_tx, private_key=key)
+    signed = Account.signTransaction(transaction_dict=contract_tx, private_key=key)
     tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
     print("tx_hash = ", tx_hash,
           "--> waiting for receipt (timeout=%d) ..." % timeout)
     sys.stdout.flush()
     # Wait for the transaction to be mined, and get the transaction receipt
-    tx_receipt = w3.eth.waitForTransactionReceipt(tx_hash, timeout=timeout)
+    receipt = w3.eth.waitForTransactionReceipt(tx_hash, timeout=timeout)
     print("Receipt arrived. Took %.1f seconds." % (time.time()-before))
 
-    if ifPrint:
-        line = "Deployed. gasUsed={gasUsed} contractAddress={contractAddress}"
-        print(line.format(**tx_receipt))
-    return tx_receipt.contractAddress
+    if receipt.status == 1:
+        line = "Deployed. Gas Used: {gasUsed}. Contract Address: {contractAddress}"
+        print(line.format(**receipt))
+    else:
+        line = "Deployed failed. Receipt Status: {status}"
+        print(line.format(**receipt))
+        exit()
+    return receipt.contractAddress
 
 
 def contract_object(contract_address, abi):
