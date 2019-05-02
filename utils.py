@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
+import json
 
 try:
     from web3 import Web3, HTTPProvider  # pip3 install web3
@@ -14,7 +15,7 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import FILE_PASSPHRASE
+from hammer.atomic_nonce import AtomicNonce
 
 
 class Error(Exception):
@@ -37,8 +38,11 @@ def print_versions():
 
 
 def init_web3(RPCaddress=None):
-    print_versions()
     w3 = Web3(HTTPProvider(RPCaddress, request_kwargs={'timeout': 120}))
+    from web3.middleware import geth_poa_middleware
+    w3.middleware_stack.inject(geth_poa_middleware, layer=0)
+
+    print_versions()
     print("web3 connection established, blockNumber =",
           w3.eth.blockNumber, end=", ")
     print("node version string = ", w3.version.node)
@@ -81,6 +85,8 @@ def read(file):
     return data
 
 
-if __name__ == '__main__':
-    global w3
-    w3 = init_web3(RPCaddress=None)
+def atomic_nonce(w3, account="0x8717eD44cEB53f15dB9CF1bEc75a037A70232AC8"):
+    initial_nonce = w3.eth.getTransactionCount(account) - 1
+    print('Initial account nonce:', initial_nonce)
+    nonce = AtomicNonce(initial_nonce)
+    return nonce

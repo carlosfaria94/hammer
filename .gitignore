@@ -1,6 +1,7 @@
 py3eth
 contract-abi.json
 contract-address.json
+last-experiment.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

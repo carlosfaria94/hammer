@@ -22,9 +22,6 @@ FILE_CONTRACT_SOURCE = "contract.sol"
 FILE_CONTRACT_ABI = "contract-abi.json"
 FILE_CONTRACT_ADDRESS = "contract-address.json"
 
-# account passphrase
-FILE_PASSPHRASE = "account-passphrase.txt"
-
 # last experiment data
 FILE_LAST_EXPERIMENT = "last-experiment.json"
 
@@ -33,9 +30,3 @@ AUTOSTOP_TPS = True
 
 # after last txs have been mined, give 10 more blocks before experiment ends
 EMPTY_BLOCKS_AT_END = 10
-
-# DB file for traversing all blocks
-DBFILE = "allblocks.db"
-
-if __name__ == '__main__':
-    print("Do not run this. Like you just did. Don't.")
