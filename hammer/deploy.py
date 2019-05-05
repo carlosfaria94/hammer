@@ -13,7 +13,7 @@ except:
     exit()
 
 from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
-from hammer.utils import init_web3, atomic_nonce
+from hammer.utils import init_web3, init_accounts
 
 
 def compile_contract(contract_source_file):
@@ -28,7 +28,7 @@ def compile_contract(contract_source_file):
     return contract_name, contract_interface
 
 
-def deploy_contract(contract_interface, timeout=TIMEOUT_DEPLOY):
+def deploy_contract(contract_interface, account, timeout=TIMEOUT_DEPLOY):
     """
     deploys contract, waits for receipt, returns address
     """
@@ -36,16 +36,15 @@ def deploy_contract(contract_interface, timeout=TIMEOUT_DEPLOY):
     # Instantiate and deploy contract
     storage_contract = w3.eth.contract(abi=contract_interface['abi'],
                                        bytecode=contract_interface['bin'])
-    nonce = atomic_nonce(w3)
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': nonce.increment(),
+        'nonce': account["nonce"].increment(),
         'chainId': CHAIN_ID
     })
-    key = '0xdde94897e9e4f787f6360552a4a723d06b0c730da77c30ce2d4cda61f94e187f'
+    print("private key", account["private_key"])
     signed = w3.eth.account.signTransaction(
-        transaction_dict=contract_tx, private_key=key)
+        transaction_dict=contract_tx, private_key=account["private_key"])
     tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
     print("tx_hash = ", tx_hash,
@@ -98,12 +97,14 @@ def init_contract(w3):
     return contract
 
 
-def compile_deploy_save(contract_source_file):
+def compile_deploy_save(w3, contract_source_file):
     """
     compile, deploy, save
     """
     contract_name, contract_interface = compile_contract(contract_source_file)
-    contract_address = deploy_contract(contract_interface)
+    # Init the first account to deploy contract
+    account = init_accounts(w3, 1).get(0)
+    contract_address = deploy_contract(contract_interface, account)
     save_to_disk(contract_address, abi=contract_interface["abi"])
     return contract_name, contract_interface, contract_address
 
@@ -111,4 +112,4 @@ def compile_deploy_save(contract_source_file):
 if __name__ == '__main__':
     global w3
     w3 = init_web3(RPCaddress=RPC_NODE_SEND)
-    compile_deploy_save(contract_source_file=FILE_CONTRACT_SOURCE)
+    compile_deploy_save(w3, contract_source_file=FILE_CONTRACT_SOURCE)
