@@ -2,12 +2,6 @@
 """
 @summary: submit many contract storage.set(uint x) transactions
 """
-
-# extend sys.path for imports:
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-
 import sys
 import time
 import json
@@ -16,24 +10,27 @@ from queue import Queue
 
 from hammer.config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
 from hammer.deploy import init_contract
-from hammer.utils import init_web3, atomic_nonce
+from hammer.utils import init_web3, init_accounts
 from hammer.check_control import get_receipts_queue, has_successful_transactions
 
 
-def storage_set(contract, arg, nonce, hashes=None):
+def storage_set(arg, account, hashes=None):
     """
-    call the storage.set(uint x) method using the web3 method 
+    call the storage.set(uint x) method using the web3 method
     """
     print(".", end=" ")
-    storage_set = contract.functions.set(x=arg).buildTransaction({
+    storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': nonce.increment(),
+        'nonce': account["nonce"].increment(),
         'chainId': CHAIN_ID
     })
-    key = '0xdde94897e9e4f787f6360552a4a723d06b0c730da77c30ce2d4cda61f94e187f'
-    print('storage_set', storage_set['nonce'])
-    signed = w3.eth.account.signTransaction(storage_set, private_key=key)
+    print(storage_set['nonce'], end=" ")
+    print("private key", account["private_key"])
+    signed = w3.eth.account.signTransaction(
+        storage_set,
+        private_key=account["private_key"]
+    )
     tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
     if hashes is not None:
@@ -41,43 +38,41 @@ def storage_set(contract, arg, nonce, hashes=None):
     return tx_hash
 
 
-def many_transactions_threaded(contract, num_tx, nonce):
+def many_transactions_threaded(num_tx, account):
     """
     submit many transactions multi-threaded.
 
     N.B.: 1 thread / transaction 
           -- machine can run out of threads, then crash
     """
-    print("send %d transactions, multi-threaded, one thread per tx:\n" % (num_tx))
+    line = "\n> send %d transactions by account: %d, multi-threaded, one thread per tx:\n"
+    print(line % (num_tx, account["address"]))
 
     threads = []
     txs = []  # container to keep all transaction hashes
     for i in range(num_tx):
-        thread = Thread(target=storage_set, args=(contract, i, nonce, txs))
+        thread = Thread(target=storage_set, args=(i, account, txs))
         threads.append(thread)
-
-    print("%d transaction threads created." % len(threads))
+    print("\n> %d transaction threads created" % len(threads))
 
     for thread in threads:
         thread.start()
         sys.stdout.flush()
-    print("all threads started.")
+    print("\n> all threads started")
 
     for thread in threads:
         thread.join()
-    print("all threads ended.")
+    print("\n> all threads ended")
 
     return txs
 
 
-def many_transactions_threaded_queue(contract, num_tx, num_worker_threads, nonce):
+def many_transactions_threaded_queue(num_tx, num_worker_threads, account):
     """
-    submit many transactions multi-threaded, 
-    with size limited threading Queue
+    submit many transactions multi-threaded, with size limited threading Queue
     """
-
-    line = "send %d transactions, via multi-threading queue with %d workers:\n"
-    print(line % (num_tx, num_worker_threads))
+    line = "send %d transactions by account: %d, via multi-threading queue with %d workers:\n"
+    print(line % (num_tx, num_worker_threads, account["address"]))
 
     q = Queue()
     txs = []  # container to keep all transaction hashes
@@ -85,29 +80,53 @@ def many_transactions_threaded_queue(contract, num_tx, num_worker_threads, nonce
     def worker():
         while True:
             item = q.get()
-            storage_set(contract, item, nonce, txs)
-            print("T", end="")
-            sys.stdout.flush()
+            storage_set(item, account, txs)
             q.task_done()
 
     for i in range(num_worker_threads):
         thread = Thread(target=worker)
         thread.daemon = True
         thread.start()
-        print("W", end="")
-        sys.stdout.flush()
-
-    print("\n%d worker threads created." % num_worker_threads)
+    print("\n> %d worker threads created and started" % num_worker_threads)
 
     for i in range(num_tx):
         q.put(i)
-        print("I", end="")
-        sys.stdout.flush()
-
-    print("\n%d items queued." % num_tx)
+    print("\n> %d items queued" % num_tx)
 
     q.join()
-    print("\nall items - done.")
+    print("\n> all items - done")
+    return txs
+
+
+def many_transactions_by_account(num_tx_per_account, accounts):
+    """
+    Submit a number of transactions per account.
+    Each account has a thread.
+    """
+    line = "%d accounts sending %d transactions each\n"
+    print(line % (len(accounts), num_tx_per_account))
+
+    txs = []  # container to keep all transaction hashes
+    threads = []
+
+    def account_worker(account):
+        for i in range(num_tx_per_account):
+            storage_set(i, account, txs)
+
+    for account in accounts:
+        thread = Thread(target=account_worker, args=(account))
+        threads.append(thread)
+    print("\n> %d account worker threads created" % len(threads))
+
+    for thread in threads:
+        thread.start()
+        sys.stdout.flush()
+    print("\n> all threads started")
+
+    for thread in threads:
+        thread.join()
+    print("\n> all threads ended")
+
     return txs
 
 
@@ -172,9 +191,9 @@ def wait_some_blocks(wait_blocks=EMPTY_BLOCKS_AT_END, pause_between_queries=0.3)
 
 def finish(txs, success):
     block_from, block_to = get_sample(txs)
-    txt = "Transaction receipts from beginning and end all arrived. Blockrange %d to %d."
-    txt = txt % (block_from, block_to)
-    print(txt)
+    line = "Transaction receipts from beginning and end all arrived. Blockrange %d to %d."
+    line = line % (block_from, block_to)
+    print(line)
 
     wait_some_blocks()
 
@@ -197,7 +216,7 @@ def check_argv():
         exit()
 
 
-def send(contract, nonce):
+def send():
     """
     sends many transactions to contract.
     choose algorithm depending on 2nd CLI argument.
@@ -207,8 +226,9 @@ def send(contract, nonce):
 
     # choose algorithm depending on 2nd CLI argument:
     if sys.argv[2] == "threaded1":
-        txs = many_transactions_threaded(
-            contract, transactions_count, nonce=nonce)
+        # Init only 1 account to send all the transactions
+        account = init_accounts(w3, 1).get(0)
+        txs = many_transactions_threaded(transactions_count, account)
     elif sys.argv[2] == "threaded2":
         num_workers = 25
         if len(sys.argv) == 4:
@@ -216,26 +236,36 @@ def send(contract, nonce):
                 num_workers = int(sys.argv[3])
             except:
                 pass
-        txs = many_transactions_threaded_queue(contract,
-                                               num_tx=transactions_count,
-                                               num_worker_threads=num_workers,
-                                               nonce=nonce)
+        # Init only 1 account to send all the transactions
+        account = init_accounts(w3, 1).get(0)
+        txs = many_transactions_threaded_queue(
+            transactions_count, num_workers, account)
+    elif sys.argv[2] == "accounts":
+        num_accounts = 20
+        if len(sys.argv) == 4:
+            try:
+                num_accounts = int(sys.argv[3])
+            except:
+                pass
+        accounts = init_accounts(w3, num_accounts)
+        txs = many_transactions_by_account(transactions_count, accounts)
+
     else:
         print("Nope. Choice '%s'" % sys.argv[2], "not recognized.")
         exit()
 
-    print("%d transaction hashes recorded, examples: %s" % (len(txs), txs[:2]))
+    print("%d transaction hashes recorded" % len(txs))
     return txs
 
 
 if __name__ == '__main__':
+    global w3, STORAGE_CONTRACT
     check_argv()
 
-    global w3
     w3 = init_web3(RPCaddress=RPC_NODE_SEND)
 
-    contract = init_contract(w3)
-    txs = send(contract, atomic_nonce(w3))
+    STORAGE_CONTRACT = init_contract(w3)
+    txs = send()
     sys.stdout.flush()  # so that the log files are updated.
 
     success = has_successful_transactions(w3, txs)

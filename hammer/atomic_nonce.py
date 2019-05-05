@@ -2,7 +2,6 @@
 """
 @summary: An atomic, thread-safe incrementing nonce. To deal with transaction on same account
 """
-
 from threading import Lock
 
 

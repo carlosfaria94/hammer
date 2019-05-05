@@ -2,7 +2,6 @@
 """
 @summary: Performs control check after sending the transactions
 """
-
 import time
 import random
 from threading import Thread

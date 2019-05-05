@@ -2,21 +2,15 @@
 """
 @summary: deploy a simple storage contract
 """
-
 import sys
 import time
 import json
 
 try:
-    from solc import compile_source  # pip install py-solc
+    from solc import compile_source
 except:
     print("Dependencies unavailable. Start virtualenv first!")
     exit()
-
-# extend path for imports:
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
 from hammer.utils import init_web3, atomic_nonce

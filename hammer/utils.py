@@ -3,19 +3,12 @@ import os
 import sys
 import json
 
-try:
-    from web3 import Web3, HTTPProvider  # pip3 install web3
-    import requests
-except:
-    print("Dependencies unavailable. Start virtualenv first!")
-    exit()
-
-# extend sys.path for imports:
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+from web3 import Web3, HTTPProvider
+import requests
 
 from hammer.atomic_nonce import AtomicNonce
+from hammer.config import MNEMONIC
+from hammer.crypto import HDPrivateKey, HDKey
 
 
 class Error(Exception):
@@ -85,8 +78,28 @@ def read(file):
     return data
 
 
-def atomic_nonce(w3, account="0x8717eD44cEB53f15dB9CF1bEc75a037A70232AC8"):
-    initial_nonce = w3.eth.getTransactionCount(account) - 1
-    print('Initial account nonce:', initial_nonce)
+def init_atomic_nonce(w3, address):
+    initial_nonce = w3.eth.getTransactionCount(address) - 1
     nonce = AtomicNonce(initial_nonce)
     return nonce
+
+
+def init_accounts(w3, how_many):
+    master_key = HDPrivateKey.master_key_from_mnemonic(MNEMONIC)
+    root_keys = HDKey.from_path(master_key, "m/44'/60'/0'")
+    acct_priv_key = root_keys[-1]
+    accounts = {}
+    for i in range(how_many):
+        keys = HDKey.from_path(
+            acct_priv_key, '{change}/{index}'.format(change=0, index=i))
+        private_key = keys[-1]
+        public_key = private_key.public_key
+        address = private_key.public_key.address()
+        address = w3.toChecksumAddress(address)
+
+        accounts[i] = {
+            "private_key": private_key._key.to_hex(),
+            "address": address,
+            "nonce": init_atomic_nonce(w3, address)
+        }
+    return accounts

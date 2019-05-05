@@ -2,18 +2,12 @@
 """
 @summary: waits until (the first node in) a network is reachable
 """
-
-# extend sys.path for imports:
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-
 import time
 
 from requests import ConnectionError
 
 from hammer.config import RPC_NODE_SEND
-from hammer.utils import curl_post, MethodNotExistentError
+from hammer.utils import curl_post, MethodNotExistentError, init_accounts, init_web3
 
 
 def simple_RPC_call(RPCaddress=RPC_NODE_SEND, method="web3_clientVersion"):

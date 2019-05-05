@@ -2,19 +2,11 @@
 """
 @summary: Timing transactions that are getting into the chain
 """
-
 import time
 import timeit
-import sys
-import os
 import json
 
-# extend path for imports:
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-
-from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT, AUTOSTOP_TPS, FILE_CONTRACT_ADDRESS
+from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT, AUTOSTOP_TPS
 from hammer.deploy import load_from_disk
 from hammer.utils import init_web3, read, file_date
 
@@ -23,25 +15,9 @@ class CodingError(Exception):
     pass
 
 
-def watch_contract(query_interval=0.1):
-    """
-    Wait for new smart contract to be deployed.
-    Continuously polls file "FILE_CONTRACT_ADDRESS".
-    Returns when overwritten file has different address or new filedate.
-    """
+def watch_contract():
     address, _ = load_from_disk()
-    when = os.path.getmtime(FILE_CONTRACT_ADDRESS)
     print("Last contract address: %s" % (address))
-
-    # while True:
-    #     time.sleep(query_interval)
-    #     # checks whether a new contract has been deployed
-    #     # because then a new address has been saved to file:
-    #     new_address, _ = load_from_disk()
-    #     new_when = os.path.getmtime(FILE_CONTRACT_ADDRESS)
-    #     if (new_address != address or new_when != when):
-    #         print("New contract address: %s" % (new_address))
-    #         break
     return
 
 
