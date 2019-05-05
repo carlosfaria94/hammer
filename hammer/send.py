@@ -26,7 +26,6 @@ def storage_set(arg, account, hashes=None):
         'chainId': CHAIN_ID
     })
     print(storage_set['nonce'], end=" ")
-    print("private key", account["private_key"])
     signed = w3.eth.account.signTransaction(
         storage_set,
         private_key=account["private_key"]
@@ -45,7 +44,7 @@ def many_transactions_threaded(num_tx, account):
     N.B.: 1 thread / transaction 
           -- machine can run out of threads, then crash
     """
-    line = "\n> send %d transactions by account: %d, multi-threaded, one thread per tx:\n"
+    line = "\n> send %d transactions by account: %s, multi-threaded, one thread per tx:\n"
     print(line % (num_tx, account["address"]))
 
     threads = []
@@ -71,7 +70,7 @@ def many_transactions_threaded_queue(num_tx, num_worker_threads, account):
     """
     submit many transactions multi-threaded, with size limited threading Queue
     """
-    line = "send %d transactions by account: %d, via multi-threading queue with %d workers:\n"
+    line = "send %d transactions by account: %d, via multi-threading queue with %s workers:\n"
     print(line % (num_tx, num_worker_threads, account["address"]))
 
     q = Queue()
@@ -109,12 +108,12 @@ def many_transactions_by_account(num_tx_per_account, accounts):
     txs = []  # container to keep all transaction hashes
     threads = []
 
-    def account_worker(account):
+    def account_worker(account, txs):
         for i in range(num_tx_per_account):
             storage_set(i, account, txs)
 
-    for account in accounts:
-        thread = Thread(target=account_worker, args=(account))
+    for account in accounts.values():
+        thread = Thread(target=account_worker, args=(account, txs))
         threads.append(thread)
     print("\n> %d account worker threads created" % len(threads))
 
