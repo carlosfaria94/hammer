@@ -3,7 +3,7 @@
 @summary: settings
 """
 # The node that send the transactions (send.py)
-RPC_NODE_SEND = 'http://localhost:8550'
+RPC_NODE_SEND = 'http://localhost:8546'
 # The node that watch the transactions (watch_tps.py)
 RPC_NODE_WATCH = 'http://localhost:8550'
 

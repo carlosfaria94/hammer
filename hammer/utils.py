@@ -7,7 +7,7 @@ from web3 import Web3, HTTPProvider
 import requests
 
 from hammer.atomic_nonce import AtomicNonce
-from hammer.config import MNEMONIC
+from hammer.config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
 from hammer.crypto import HDPrivateKey, HDKey
 
 
@@ -103,3 +103,28 @@ def init_accounts(w3, how_many):
             "nonce": init_atomic_nonce(w3, address)
         }
     return accounts
+
+
+def transfer_funds(w3, sender, receiver, amount):
+    amount = w3.toWei(amount, 'ether')
+    tx = {
+        'to': receiver["address"],
+        'value': amount,
+        'gas': GAS,
+        'gasPrice': GAS_PRICE,
+        'nonce': sender["nonce"].increment(),
+        'chainId': CHAIN_ID
+    }
+    signed = w3.eth.account.signTransaction(tx, sender["private_key"])
+    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
+
+    # Wait for the transaction to be mined, and get the transaction receipt
+    receipt = w3.eth.waitForTransactionReceipt(tx_hash)
+    if receipt.status == 1:
+        print("> Sent %d ETH to %s (tx hash: %s)" %
+              (amount, receiver["address"], tx_hash))
+    else:
+        print("> Tx failed when sending %d ETH to %s" %
+              (amount, receiver["address"]))
+        exit()
+    return tx_hash

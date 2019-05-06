@@ -10,7 +10,7 @@ from queue import Queue
 
 from hammer.config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
 from hammer.deploy import init_contract
-from hammer.utils import init_web3, init_accounts
+from hammer.utils import init_web3, init_accounts, transfer_funds
 from hammer.check_control import get_receipts_queue, has_successful_transactions
 
 
@@ -35,6 +35,13 @@ def storage_set(arg, account, hashes=None):
     if hashes is not None:
         hashes.append(tx_hash)
     return tx_hash
+
+
+def init_account_balances(w3, accounts):
+    print("\n > Transfering funds to %d accounts" % len(accounts))
+    sender = accounts.get(0)
+    for account in accounts.values():
+        transfer_funds(w3, sender, account, 5)
 
 
 def many_transactions_threaded(num_tx, account):
@@ -247,6 +254,7 @@ def send():
             except:
                 pass
         accounts = init_accounts(w3, num_accounts)
+        init_account_balances(w3, accounts)
         txs = many_transactions_by_account(transactions_count, accounts)
 
     else:
