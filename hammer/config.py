@@ -7,7 +7,8 @@ RPC_NODE_SEND = 'http://localhost:8546'
 # The node that watch the transactions (watch_tps.py)
 RPC_NODE_WATCH = 'http://localhost:8550'
 
-MNEMONIC = "about hair goose output senior short stone decade lock loop kidney beach"
+# TODO: Insert MNEMONIC here to generate accounts
+MNEMONIC = ""
 
 TIMEOUT_DEPLOY = 300
 
