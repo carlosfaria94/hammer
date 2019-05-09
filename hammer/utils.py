@@ -78,12 +78,6 @@ def read(file):
     return data
 
 
-def init_atomic_nonce(w3, address):
-    initial_nonce = w3.eth.getTransactionCount(address) - 1
-    nonce = AtomicNonce(initial_nonce)
-    return nonce
-
-
 def init_accounts(w3, how_many):
     master_key = HDPrivateKey.master_key_from_mnemonic(MNEMONIC)
     root_keys = HDKey.from_path(master_key, "m/44'/60'/0'")
@@ -96,11 +90,12 @@ def init_accounts(w3, how_many):
         public_key = private_key.public_key
         address = private_key.public_key.address()
         address = w3.toChecksumAddress(address)
+        initial_nonce = AtomicNonce(w3, address)
 
         accounts[i] = {
             "private_key": private_key._key.to_hex(),
             "address": address,
-            "nonce": init_atomic_nonce(w3, address)
+            "nonce": initial_nonce
         }
     return accounts
 
@@ -112,7 +107,7 @@ def transfer_funds(w3, sender, receiver, amount):
         'value': amount,
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': sender["nonce"].increment(),
+        'nonce': sender["nonce"].increment(w3),
         'chainId': CHAIN_ID
     }
     signed = w3.eth.account.signTransaction(tx, sender["private_key"])

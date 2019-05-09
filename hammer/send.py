@@ -22,7 +22,7 @@ def storage_set(arg, account, hashes=None):
     storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(),
+        'nonce': account["nonce"].increment(w3),
         'chainId': CHAIN_ID
     })
     print(storage_set['nonce'], end=" ")

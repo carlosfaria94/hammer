@@ -39,7 +39,7 @@ def deploy_contract(contract_interface, account, timeout=TIMEOUT_DEPLOY):
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(),
+        'nonce': account["nonce"].increment(w3),
         'chainId': CHAIN_ID
     })
     print("private key", account["private_key"])
