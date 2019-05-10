@@ -1,5 +1,4 @@
-web3==4.9.2
-py-solc==3.2.0
+web3
 rlp
 eth_utils
 two1

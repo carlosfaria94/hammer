@@ -6,10 +6,14 @@ import json
 from web3 import Web3, HTTPProvider
 import requests
 
-from hammer.atomic_nonce import AtomicNonce
-from hammer.config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
-from hammer.crypto import HDPrivateKey, HDKey
+# extend path for imports:
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
+from hammer.crypto import HDPrivateKey, HDKey
+from hammer.config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
+from hammer.atomic_nonce import AtomicNonce
 
 class Error(Exception):
     pass
@@ -21,13 +25,7 @@ class MethodNotExistentError(Error):
 
 def print_versions():
     from web3 import __version__ as web3version
-    from solc import get_solc_version
-
-    import pkg_resources
-    pysolcversion = pkg_resources.get_distribution("py-solc").version
-
-    print("versions: web3 %s, py-solc: %s, solc %s, python %s" % (web3version,
-                                                                  pysolcversion, get_solc_version(), sys.version.replace("\n", "")))
+    print("versions: web3 %s, python %s" % (web3version, sys.version.replace("\n", "")))
 
 
 def init_web3(RPCaddress=None):
@@ -70,12 +68,6 @@ def file_date(file):
     except FileNotFoundError:
         when = 0
     return when
-
-
-def read(file):
-    with open(file, "r") as f:
-        data = json.load(f)
-    return data
 
 
 def init_accounts(w3, how_many):

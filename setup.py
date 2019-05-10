@@ -10,13 +10,9 @@ setup(
     install_requires=[
         'requests',
         'web3',
-        'py-solc',
-        'base58',
         'rlp',
         'eth_utils',
         'two1',
-        'pycrypto',
-        'pycryptodome'
     ],
     author='Carlos Faria',
     author_email='carlosfaria@pm.me',

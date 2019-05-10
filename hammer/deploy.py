@@ -6,45 +6,29 @@ import sys
 import time
 import json
 
-try:
-    from solc import compile_source
-except:
-    print("Dependencies unavailable. Start virtualenv first!")
-    exit()
+# extend path for imports:
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_SOURCE, FILE_CONTRACT_ABI, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
 from hammer.utils import init_web3, init_accounts
+from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
 
 
-def compile_contract(contract_source_file):
-    """
-    Reads file, compiles, returns contract name and interface
-    """
-    with open(contract_source_file, "r") as f:
-        contract_source_code = f.read()
-    compiled_sol = compile_source(contract_source_code)  # Compiled source code
-    contract_interface = compiled_sol['<stdin>:SimpleStorage']
-    contract_name = list(compiled_sol.keys())[0]
-    return contract_name, contract_interface
-
-
-def deploy_contract(contract_interface, account, timeout=TIMEOUT_DEPLOY):
+def deploy(account, timeout=TIMEOUT_DEPLOY):
     """
     deploys contract, waits for receipt, returns address
     """
     before = time.time()
-    # Instantiate and deploy contract
-    storage_contract = w3.eth.contract(abi=contract_interface['abi'],
-                                       bytecode=contract_interface['bin'])
+    _, abi, contract_bin = load_from_disk()
+    storage_contract = w3.eth.contract(abi=abi, bytecode=contract_bin)
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
         'nonce': account["nonce"].increment(w3),
         'chainId': CHAIN_ID
     })
-    print("private key", account["private_key"])
-    signed = w3.eth.account.signTransaction(
-        transaction_dict=contract_tx, private_key=account["private_key"])
+    signed = w3.eth.account.signTransaction(contract_tx, account["private_key"])
     tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
     print("tx_hash = ", tx_hash,
@@ -57,11 +41,12 @@ def deploy_contract(contract_interface, account, timeout=TIMEOUT_DEPLOY):
     if receipt.status == 1:
         line = "Deployed. Gas Used: {gasUsed}. Contract Address: {contractAddress}"
         print(line.format(**receipt))
+        save_to_disk(receipt.contractAddress)
+        return
     else:
         line = "Deployed failed. Receipt Status: {status}"
         print(line.format(**receipt))
         exit()
-    return receipt.contractAddress
 
 
 def contract_object(contract_address, abi):
@@ -71,45 +56,38 @@ def contract_object(contract_address, abi):
     return w3.eth.contract(address=contract_address, abi=abi)
 
 
-def save_to_disk(contract_address, abi):
+def save_to_disk(contract_address):
     """
-    save address & abi, for usage in the other script
+    save address, to use on watch_tps.py
     """
     json.dump({"address": contract_address}, open(FILE_CONTRACT_ADDRESS, 'w'))
-    json.dump(abi, open(FILE_CONTRACT_ABI, 'w'))
 
 
-def load_from_disk():
+def load_from_disk(
+    file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN):
     """
-    load address & abi from previous run of 'compile_deploy_save'
+    Load contract from disk. Returns: address, ABI and Bin from the contract
     """
-    contract_address = json.load(open(FILE_CONTRACT_ADDRESS, 'r'))
-    abi = json.load(open(FILE_CONTRACT_ABI, 'r'))
-    return contract_address["address"], abi
+    try:
+        contract_address = json.load(open(file_address, 'r'))
+    except FileNotFoundError:
+        contract_address = None
+    abi = json.load(open(file_abi, 'r'))
+    contract_bin = json.load(open(file_bin, 'r'))
+    return contract_address["address"], abi, contract_bin["bin"]
 
 
 def init_contract(w3):
     """
     initialise contract object from address, stored in disk file by deploy.py
     """
-    contract_address, abi = load_from_disk()
+    contract_address, abi, _ = load_from_disk()
     contract = w3.eth.contract(address=contract_address, abi=abi)
     return contract
-
-
-def compile_deploy_save(w3, contract_source_file):
-    """
-    compile, deploy, save
-    """
-    contract_name, contract_interface = compile_contract(contract_source_file)
-    # Init the first account to deploy contract
-    account = init_accounts(w3, 1).get(0)
-    contract_address = deploy_contract(contract_interface, account)
-    save_to_disk(contract_address, abi=contract_interface["abi"])
-    return contract_name, contract_interface, contract_address
-
 
 if __name__ == '__main__':
     global w3
     w3 = init_web3(RPCaddress=RPC_NODE_SEND)
-    compile_deploy_save(w3, contract_source_file=FILE_CONTRACT_SOURCE)
+    # Init the first account to deploy contract
+    account = init_accounts(w3, 1).get(0)
+    deploy(account)

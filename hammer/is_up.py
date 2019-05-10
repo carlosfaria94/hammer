@@ -6,6 +6,11 @@ import time
 
 from requests import ConnectionError
 
+# extend path for imports:
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
 from hammer.config import RPC_NODE_SEND
 from hammer.utils import curl_post, MethodNotExistentError, init_accounts, init_web3
 

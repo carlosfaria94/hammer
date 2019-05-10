@@ -6,9 +6,14 @@ import time
 import timeit
 import json
 
+# extend path for imports:
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
 from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT, AUTOSTOP_TPS
 from hammer.deploy import load_from_disk
-from hammer.utils import init_web3, read, file_date
+from hammer.utils import init_web3, file_date
 
 
 class CodingError(Exception):
@@ -16,7 +21,7 @@ class CodingError(Exception):
 
 
 def watch_contract():
-    address, _ = load_from_disk()
+    address, _, _ = load_from_disk()
     print("Last contract address: %s" % (address))
     return
 
@@ -137,7 +142,7 @@ def measure(block_num, pause_between_queries=0.3, relaxation_rounds=3):
         # only THEN end this loop:
         if AUTOSTOP_TPS and file_date(file=FILE_LAST_EXPERIMENT) != whenBefore:
             print("Received signal from send.py when updating last-experiment.json")
-            block_last = read(file=FILE_LAST_EXPERIMENT)['send']['block_last']
+            block_last = json.load(open(FILE_LAST_EXPERIMENT, 'r'))['send']['block_last']
             final_tps_avg = get_nearest_entry(
                 tps_avg=tps_avg, block_last=block_last)
             break

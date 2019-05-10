@@ -8,6 +8,11 @@ import json
 from threading import Thread
 from queue import Queue
 
+# extend path for imports:
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
+
 from hammer.config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
 from hammer.deploy import init_contract
 from hammer.utils import init_web3, init_accounts, transfer_funds

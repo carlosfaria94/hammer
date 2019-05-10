@@ -6,10 +6,13 @@ Fork from https://github.com/drandreaskrueger/chainhammer to work with Pantheon.
 
 - Python 3.6
 
-## Install dependencies
+## Install dependencies using virtualenv
 
 ```
-pip install -r requirements.txt
+sudo pip3 install virtualenv
+virtualenv -p python3 venv
+source venv/bin/activate
+pip3 install -r requirements.txt
 ```
 
 ## Configuration
@@ -25,6 +28,7 @@ On `hammer/config`:
 0. Node up and running?
 
 ```
+source venv/bin/activate
 hammer/is_up.py
 ```
 
@@ -34,9 +38,10 @@ hammer/is_up.py
 hammer/deploy.py
 ```
 
-2. Start TPS watch
+2. Start TPS watch in a new terminal session
 
 ```
+source venv/bin/activate
 hammer/watch_tps.py
 ```
 
