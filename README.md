@@ -38,11 +38,13 @@ hammer/is_up.py
 hammer/deploy.py
 ```
 
-2. Start TPS watch in a new terminal session
+2. Start TPS measuring
+
+**NOTE:** Start a new terminal session.
 
 ```
 source venv/bin/activate
-hammer/watch_tps.py
+hammer/measure_tps.py
 ```
 
 3. Flood the network with transactions
@@ -52,5 +54,6 @@ Use the first 3 accounts to broadcast 100 transactions.
 **NOTE:** The first account (index 0) needs to have funds. It will then send 5 ETH to each new account.
 
 ```
+source venv/bin/activate
 hammer/send.py 100 accounts 3
 ```

@@ -11,8 +11,8 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT, AUTOSTOP_TPS
-from hammer.deploy import load_from_disk
+from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT
+from hammer.deploy import load_contract
 from hammer.utils import init_web3, file_date
 
 
@@ -21,8 +21,8 @@ class CodingError(Exception):
 
 
 def watch_contract():
-    address, _, _ = load_from_disk()
-    print("Last contract address: %s" % (address))
+    address, _, _ = load_contract()
+    print("\n Last contract address: %s" % (address))
     return
 
 
@@ -62,10 +62,8 @@ def analyze_new_blocks(block_num, new_block_num, tx_count, start_time, peak_tps_
     line = "block %d | new #TX %3d / %4.0f ms = " \
            "%5.1f TPS_current | total: #TX %4d / %4.1f s = %5.1f TPS_average " \
            "(peak %s %5.1f TPS_average)"
-    line = line % (new_block_num, tx_count_new, block_time_sec * 1000,
-                   tps_current, tx_count, elapsed, tps_avg, verb, peak_tps_avg)
-    print(line)
-
+    print(line % (new_block_num, tx_count_new, block_time_sec * 1000,
+                  tps_current, tx_count, elapsed, tps_avg, verb, peak_tps_avg))
     return tx_count, peak_tps_avg, tps_avg
 
 
@@ -96,18 +94,18 @@ def get_nearest_entry(tps_avg, block_last):
     while not answer:
         i += -1
         if i < min_index:
-            raise CodingError("Ouch, this should never happen. Info: len(tps_avg)=%d block_last=%d" % (
-                len(tps_avg), block_last))
+            raise CodingError(
+                "Ouch, this should never happen. Info: len(tps_avg)=%d block_last=%d" % (
+                    len(tps_avg), block_last)
+            )
         answer = tps_avg.get(i, None)
-
     return answer
-
 
 def measure(block_num, pause_between_queries=0.3, relaxation_rounds=3):
     """
     when a (or more) new block appeared, add them to the total, and print a line.
     """
-    whenBefore = file_date(file=FILE_LAST_EXPERIMENT)
+    when_before = file_date(file=FILE_LAST_EXPERIMENT)
 
     tx_count = w3.eth.getBlockTransactionCount(block_num)
 
@@ -140,46 +138,40 @@ def measure(block_num, pause_between_queries=0.3, relaxation_rounds=3):
         # send.py --> store_experiment_data() is called AFTER last tx was mined.
         # THEN do another 10 empty blocks...
         # only THEN end this loop:
-        if AUTOSTOP_TPS and file_date(file=FILE_LAST_EXPERIMENT) != whenBefore:
+        if file_date(file=FILE_LAST_EXPERIMENT) != when_before:
             print("Received signal from send.py when updating last-experiment.json")
             block_last = json.load(open(FILE_LAST_EXPERIMENT, 'r'))['send']['block_last']
-            final_tps_avg = get_nearest_entry(
-                tps_avg=tps_avg, block_last=block_last)
+            final_tps_avg = get_nearest_entry(tps_avg, block_last)
             break
 
         # do not query too often; as little side effect on node as possible
         time.sleep(pause_between_queries)
 
     print("Experiment ended! Current blocknumber = %d" % (w3.eth.blockNumber))
-    return peak_tps_avg, final_tps_avg, start_epochtime
-
+    write_measures(peak_tps_avg, final_tps_avg, start_epochtime)
 
 def write_measures(peak_tps_avg, final_tps_avg, start_epochtime, file=FILE_LAST_EXPERIMENT):
     with open(file, "r") as f:
         data = json.load(f)
 
     data["tps"] = {}
-    data["tps"]["peak_tps_avg"] = peak_tps_avg
-    data["tps"]["final_tps_avg"] = final_tps_avg
+    data["tps"]["peak_tps_avg"] = round(peak_tps_avg, 1)
+    data["tps"]["final_tps_avg"] = round(final_tps_avg, 1)
     data["tps"]["start_epochtime"] = start_epochtime
 
     with open(file, "w") as f:
         json.dump(data, f)
+
+    print("Experiment results writen on", FILE_LAST_EXPERIMENT)
 
 
 if __name__ == '__main__':
     global w3
     w3 = init_web3(RPCaddress=RPC_NODE_WATCH)
 
-    print("\n Block ", w3.eth.blockNumber,
-          " - waiting for something to happen")
-
     watch_contract()
+
     start_block_number = w3.eth.blockNumber
     print("\n Start Block Number:", start_block_number)
 
-    peak_tps_avg, final_tps_avg, start_epochtime = measure(start_block_number)
-
-    write_measures(peak_tps_avg, final_tps_avg, start_epochtime)
-
-    print("Updated info file:", FILE_LAST_EXPERIMENT, "THE END.")
+    measure(start_block_number)

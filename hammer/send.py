@@ -181,7 +181,7 @@ def store_experiment_data(success, num_txs, block_from, block_to, empty_blocks, 
 def wait_some_blocks(wait_blocks=EMPTY_BLOCKS_AT_END, pause_between_queries=0.3):
     """
     Actually, the waiting has to be done here,
-    because ./send.py is started later than ./watch_tps.py
+    because ./send.py is started later than ./measure_tps.py
     So when ./send.py ends, the analysis can happen.
     """
     block_number_start = w3.eth.blockNumber
@@ -208,11 +208,10 @@ def finish(txs, success):
 
     wait_some_blocks()
 
-    store_experiment_data(success, len(txs), block_from,
-                          block_to, empty_blocks=EMPTY_BLOCKS_AT_END)
+    store_experiment_data(success, len(txs), block_from, block_to, empty_blocks=EMPTY_BLOCKS_AT_END)
 
-    print("Data stored. This will trigger watch_tps.py to end.\n",
-          "(Beware: Wait ~0.5s until watch_tps.py stops and writes to same file.)")
+    print("Data stored. This will trigger measure_tps.py to end.\n",
+          "(Beware: Wait ~0.5s until measure_tps.py stops and writes to same file.)")
 
 
 def check_argv():

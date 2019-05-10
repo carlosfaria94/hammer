@@ -20,7 +20,7 @@ def deploy(account, timeout=TIMEOUT_DEPLOY):
     deploys contract, waits for receipt, returns address
     """
     before = time.time()
-    _, abi, contract_bin = load_from_disk()
+    _, abi, contract_bin = load_contract()
     storage_contract = w3.eth.contract(abi=abi, bytecode=contract_bin)
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS,
@@ -41,7 +41,7 @@ def deploy(account, timeout=TIMEOUT_DEPLOY):
     if receipt.status == 1:
         line = "Deployed. Gas Used: {gasUsed}. Contract Address: {contractAddress}"
         print(line.format(**receipt))
-        save_to_disk(receipt.contractAddress)
+        save_address(receipt.contractAddress)
         return
     else:
         line = "Deployed failed. Receipt Status: {status}"
@@ -56,14 +56,14 @@ def contract_object(contract_address, abi):
     return w3.eth.contract(address=contract_address, abi=abi)
 
 
-def save_to_disk(contract_address):
+def save_address(contract_address):
     """
-    save address, to use on watch_tps.py
+    Save contract address, to use on measure_tps.py
     """
     json.dump({"address": contract_address}, open(FILE_CONTRACT_ADDRESS, 'w'))
 
 
-def load_from_disk(
+def load_contract(
     file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN):
     """
     Load contract from disk. Returns: address, ABI and Bin from the contract
@@ -81,7 +81,7 @@ def init_contract(w3):
     """
     initialise contract object from address, stored in disk file by deploy.py
     """
-    contract_address, abi, _ = load_from_disk()
+    contract_address, abi, _ = load_contract()
     contract = w3.eth.contract(address=contract_address, abi=abi)
     return contract
 

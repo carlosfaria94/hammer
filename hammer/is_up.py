@@ -12,7 +12,7 @@ if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from hammer.config import RPC_NODE_SEND
-from hammer.utils import curl_post, MethodNotExistentError, init_accounts, init_web3
+from hammer.utils import curl_post, MethodNotExistentError, init_web3
 
 
 def simple_RPC_call(RPCaddress=RPC_NODE_SEND, method="web3_clientVersion"):
@@ -54,7 +54,6 @@ def loop_until_is_up(seconds_between_calls=0.5, timeout=20):
         time.sleep(seconds_between_calls)
 
     return success
-
 
 if __name__ == '__main__':
     loop_until_is_up()
