@@ -3,19 +3,19 @@
 @summary: settings
 """
 # The node that send the transactions (send.py)
-RPC_NODE_SEND = 'http://localhost:32772/jsonrpc'
+RPC_NODE_SEND = 'http://localhost:32773/jsonrpc'
 # The node that watch the transactions (measure_tps.py)
-RPC_NODE_WATCH = 'http://localhost:32772/jsonrpc'
+RPC_NODE_WATCH = 'http://localhost:32773/jsonrpc'
 
 # TODO: Insert MNEMONIC here to generate accounts
 MNEMONIC = ""
 
 TIMEOUT_DEPLOY = 300
 
-GAS = 4700000
+GAS = 50000 # Estimate gas to change the contract Storage
 GAS_PRICE = 20000000000
 
-CHAIN_ID = 1729  # Network or chain id
+CHAIN_ID = 6174  # Network or chain id
 
 # contract files:
 FILE_CONTRACT_SOURCE = "contract.sol"
