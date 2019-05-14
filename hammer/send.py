@@ -30,7 +30,6 @@ def storage_set(arg, account, hashes=None):
         'nonce': account["nonce"].increment(w3),
         'chainId': CHAIN_ID
     })
-    print(storage_set['nonce'], end=" ")
     signed = w3.eth.account.signTransaction(
         storage_set,
         private_key=account["private_key"]

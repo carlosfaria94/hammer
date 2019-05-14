@@ -12,7 +12,7 @@ if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from hammer.utils import init_web3, init_accounts
-from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN, FILE_CONTRACT_ADDRESS, GAS, GAS_PRICE, CHAIN_ID
+from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN, FILE_CONTRACT_ADDRESS, GAS_DEPLOY, GAS_PRICE, CHAIN_ID
 
 
 def deploy(account, timeout=TIMEOUT_DEPLOY):
@@ -23,7 +23,7 @@ def deploy(account, timeout=TIMEOUT_DEPLOY):
     _, abi, contract_bin = load_contract()
     storage_contract = w3.eth.contract(abi=abi, bytecode=contract_bin)
     contract_tx = storage_contract.constructor().buildTransaction({
-        'gas': GAS,
+        'gas': GAS_DEPLOY,
         'gasPrice': GAS_PRICE,
         'nonce': account["nonce"].increment(w3),
         'chainId': CHAIN_ID
