@@ -154,7 +154,7 @@ def get_sample(txs, tx_ranges=100, timeout=60):
     return min(block_numbers), max(block_numbers)
 
 
-def store_experiment_data(success, num_txs, block_from, block_to, empty_blocks, filename=FILE_LAST_EXPERIMENT):
+def store_experiment_data(success, num_txs, block_from, block_to, empty_blocks, file=FILE_LAST_EXPERIMENT):
     """
     most basic data about this last experiment, stored in same (overwritten) file.
     Purpose: diagramming should be able to calc proper averages & select ranges
@@ -173,9 +173,16 @@ def store_experiment_data(success, num_txs, block_from, block_to, empty_blocks, 
         }
     }
 
-    with open(filename, "w") as f:
+    with open(file, "w") as f:
         json.dump(data, f)
 
+def init_experiment_data(file=FILE_LAST_EXPERIMENT):
+    """
+    When we init the `FILE_LAST_EXPERIMENT` it will init TPS measurement (measure_tps.py) 
+    """
+    data = {}
+    with open(file, "w") as f:
+        json.dump(data, f)
 
 def wait_some_blocks(wait_blocks=EMPTY_BLOCKS_AT_END, pause_between_queries=0.3):
     """
@@ -237,6 +244,7 @@ def send():
     if sys.argv[2] == "threaded1":
         # Init only 1 account to send all the transactions
         account = init_accounts(w3, 1).get(0)
+        init_experiment_data()
         txs = many_transactions_threaded(transactions_count, account)
     elif sys.argv[2] == "threaded2":
         num_workers = 25
@@ -247,6 +255,7 @@ def send():
                 pass
         # Init only 1 account to send all the transactions
         account = init_accounts(w3, 1).get(0)
+        init_experiment_data()
         txs = many_transactions_threaded_queue(
             transactions_count, num_workers, account)
     elif sys.argv[2] == "accounts":
@@ -258,6 +267,7 @@ def send():
                 pass
         accounts = init_accounts(w3, num_accounts)
         init_account_balances(w3, accounts)
+        init_experiment_data()
         txs = many_transactions_by_account(transactions_count, accounts)
 
     else:

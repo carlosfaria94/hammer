@@ -2,6 +2,7 @@
 """
 @summary: Timing transactions that are getting into the chain
 """
+import os
 import time
 import timeit
 import json
@@ -19,6 +20,19 @@ from hammer.utils import init_web3, file_date
 class CodingError(Exception):
     pass
 
+def wait_file(file=FILE_LAST_EXPERIMENT, interval=0.1):
+    """
+    Waits for `FILE_LAST_EXPERIMENT` to be initiated.
+    It signals that accounts were already funded.
+    """
+    when = os.path.getmtime(file)
+    print("Waiting %s to be initiated" % file)
+    while True:
+        time.sleep(interval)
+        new_when = os.path.getmtime(file)
+        if new_when != when:
+            break
+    return
 
 def watch_contract():
     address, _, _ = load_contract()
@@ -101,7 +115,7 @@ def get_nearest_entry(tps_avg, block_last):
         answer = tps_avg.get(i, None)
     return answer
 
-def measure(block_num, pause_between_queries=0.3, relaxation_rounds=3):
+def measure(block_num, pause_between_queries=0.3, relaxation_rounds=1):
     """
     when a (or more) new block appeared, add them to the total, and print a line.
     """
@@ -169,6 +183,7 @@ if __name__ == '__main__':
     global w3
     w3 = init_web3(RPCaddress=RPC_NODE_WATCH)
 
+    wait_file()
     watch_contract()
 
     start_block_number = w3.eth.blockNumber

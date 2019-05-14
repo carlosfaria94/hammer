@@ -3,9 +3,9 @@
 @summary: settings
 """
 # The node that send the transactions (send.py)
-RPC_NODE_SEND = 'https://public-0.publicmint.com:8545'
+RPC_NODE_SEND = ""
 # The node that watch the transactions (measure_tps.py)
-RPC_NODE_WATCH = 'https://public-0.publicmint.com:8545'
+RPC_NODE_WATCH = ""
 
 # TODO: Insert MNEMONIC here to generate accounts
 MNEMONIC = ""
