@@ -11,9 +11,9 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.crypto import HDPrivateKey, HDKey
-from hammer.config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
-from hammer.atomic_nonce import AtomicNonce
+from crypto import HDPrivateKey, HDKey
+from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
+from atomic_nonce import AtomicNonce
 
 class Error(Exception):
     pass

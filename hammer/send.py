@@ -13,10 +13,10 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
-from hammer.deploy import init_contract
-from hammer.utils import init_web3, init_accounts, transfer_funds
-from hammer.check_control import get_receipts_queue, has_successful_transactions
+from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
+from deploy import init_contract
+from utils import init_web3, init_accounts, transfer_funds
+from check_control import get_receipts_queue, has_successful_transactions
 
 
 def storage_set(arg, account, hashes=None):

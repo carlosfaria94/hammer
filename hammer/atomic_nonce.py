@@ -44,4 +44,5 @@ class AtomicNonce:
         """
         with self._lock:
             self.value = w3.eth.getTransactionCount(self.address, 'pending')
+            #self.value = self.value + num
             return self.value

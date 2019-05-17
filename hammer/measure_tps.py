@@ -12,9 +12,9 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT
-from hammer.deploy import load_contract
-from hammer.utils import init_web3, file_date
+from config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT
+from deploy import load_contract
+from utils import init_web3, file_date
 
 
 class CodingError(Exception):

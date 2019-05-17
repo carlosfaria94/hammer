@@ -11,8 +11,8 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.utils import init_web3, init_accounts
-from hammer.config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN, FILE_CONTRACT_ADDRESS, GAS_DEPLOY, GAS_PRICE, CHAIN_ID
+from utils import init_web3, init_accounts
+from config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN, FILE_CONTRACT_ADDRESS, GAS_DEPLOY, GAS_PRICE, CHAIN_ID
 
 
 def deploy(account, timeout=TIMEOUT_DEPLOY):
@@ -69,12 +69,12 @@ def load_contract(
     Load contract from disk. Returns: address, ABI and Bin from the contract
     """
     try:
-        contract_address = json.load(open(file_address, 'r'))
+        contract_address = json.load(open(file_address, 'r'))["address"]
     except FileNotFoundError:
         contract_address = None
     abi = json.load(open(file_abi, 'r'))
-    contract_bin = json.load(open(file_bin, 'r'))
-    return contract_address["address"], abi, contract_bin["bin"]
+    contract_bin = json.load(open(file_bin, 'r'))["bin"]
+    return contract_address, abi, contract_bin
 
 
 def init_contract(w3):

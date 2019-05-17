@@ -11,8 +11,8 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from hammer.config import RPC_NODE_SEND
-from hammer.utils import curl_post, MethodNotExistentError, init_web3
+from config import RPC_NODE_SEND
+from utils import curl_post, MethodNotExistentError, init_web3
 
 
 def simple_RPC_call(RPCaddress=RPC_NODE_SEND, method="web3_clientVersion"):
