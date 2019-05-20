@@ -25,7 +25,7 @@ def wait_file(file=FILE_LAST_EXPERIMENT, interval=0.1):
     Waits for `FILE_LAST_EXPERIMENT` to be initiated.
     It signals that accounts were already funded.
     """
-    when = os.path.getmtime(file)
+    when = file_date(file)
     print("Waiting %s to be initiated" % file)
     while True:
         time.sleep(interval)
