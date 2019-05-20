@@ -29,7 +29,7 @@ def wait_file(file=FILE_LAST_EXPERIMENT, interval=0.1):
     print("Waiting %s to be initiated" % file)
     while True:
         time.sleep(interval)
-        new_when = os.path.getmtime(file)
+        new_when = file_date(file)
         if new_when != when:
             break
     return
