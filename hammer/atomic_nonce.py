@@ -35,7 +35,7 @@ class AtomicNonce:
     def __init__(self, w3, address):
         """Initialize a new atomic nonce to given initial value"""
         self.address = address
-        self.value = w3.eth.getTransactionCount(self.address, 'pending')
+        self.value = w3.eth.getTransactionCount(self.address) - 1
         self._lock = Lock()
 
     def increment(self, w3, num=1):
@@ -43,6 +43,5 @@ class AtomicNonce:
         new value.
         """
         with self._lock:
-            self.value = w3.eth.getTransactionCount(self.address, 'pending')
-            #self.value = self.value + num
+            self.value = self.value + num
             return self.value

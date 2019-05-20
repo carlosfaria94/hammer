@@ -91,27 +91,24 @@ def init_accounts(w3, how_many):
         }
     return accounts
 
+def has_balance(w3, account):
+    balance = w3.eth.getBalance(account["address"])
+    balance = w3.fromWei(balance, 'ether')
+    if balance >= 1:
+        return True
+    else:
+        return False
 
 def transfer_funds(w3, sender, receiver, amount):
-    amount = w3.toWei(amount, 'ether')
-    tx = {
-        'to': receiver["address"],
-        'value': amount,
-        'gas': GAS,
-        'gasPrice': GAS_PRICE,
-        'nonce': sender["nonce"].increment(w3),
-        'chainId': CHAIN_ID
-    }
-    signed = w3.eth.account.signTransaction(tx, sender["private_key"])
-    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
-
-    # Wait for the transaction to be mined, and get the transaction receipt
-    receipt = w3.eth.waitForTransactionReceipt(tx_hash)
-    if receipt.status == 1:
-        print("> Sent %d ETH to %s (tx hash: %s)" %
-              (amount, receiver["address"], tx_hash))
-    else:
-        print("> Tx failed when sending %d ETH to %s" %
-              (amount, receiver["address"]))
-        exit()
-    return tx_hash
+    if not has_balance(w3, receiver):
+        amount = w3.toWei(amount, 'ether')
+        tx = {
+            'to': receiver["address"],
+            'value': amount,
+            'gas': GAS,
+            'gasPrice': GAS_PRICE,
+            'nonce': sender["nonce"].increment(w3),
+            'chainId': CHAIN_ID
+        }
+        signed = w3.eth.account.signTransaction(tx, sender["private_key"])
+        tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))

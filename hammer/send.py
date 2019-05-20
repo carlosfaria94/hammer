@@ -18,127 +18,133 @@ from deploy import init_contract
 from utils import init_web3, init_accounts, transfer_funds
 from check_control import get_receipts_queue, has_successful_transactions
 
+def send():
+    """
+    sends many transactions to contract.
+    choose algorithm depending on 2nd CLI argument.
+    """
+    print("\nCurrent blockNumber = ", w3.eth.blockNumber)
+    transactions_count = int(sys.argv[1])
 
-def storage_set(arg, account, hashes=None):
+    # choose algorithm depending on 2nd CLI argument:
+    if sys.argv[2] == "accounts":
+        num_accounts = 20
+        if len(sys.argv) == 4:
+            try:
+                num_accounts = int(sys.argv[3])
+            except:
+                pass
+        accounts = init_accounts(w3, num_accounts)
+        init_account_balances(w3, accounts)
+        accounts = create_signed_transactions(transactions_count, accounts)
+        init_experiment_data()
+        txs = broadcast_transactions(transactions_count, accounts)
+    else:
+        print("Nope. Choice '%s'" % sys.argv[2], "not recognized.")
+        exit()
+
+    print("%d transaction hashes recorded" % len(txs))
+    return txs
+
+def create_signed_transactions(num_tx_per_account, accounts):
+    """
+    Create and sign transaction that call Storage.set(x) and add it to a Queue on account["signatures"]
+    """
+    line = "\n> %d accounts creating and signing %d transactions each\n"
+    print(line % (len(accounts), num_tx_per_account))
+
+    threads = []
+
+    def sign_worker(account, index):
+        acc_signatures = Queue()
+        for i in range(num_tx_per_account):
+            storage_set(i, account, acc_signatures)
+        account["signatures"] = acc_signatures
+        accounts[index] = account
+
+    for index, account in accounts.items():
+        thread = Thread(target=sign_worker, args=(account, index))
+        threads.append(thread)
+
+    for thread in threads:
+        thread.start()
+        sys.stdout.flush()
+
+    for thread in threads:
+        thread.join()
+
+    return accounts
+
+def broadcast_transactions(num_tx_per_account, accounts):
+    """
+    Consumes signed transactions from a Queue, to broadcast each one per account.
+    Each account has a thread.
+    """
+    line = "%d accounts broadcasting %d transactions each\n"
+    print(line % (len(accounts), num_tx_per_account))
+
+    txs = []  # container to keep all transaction hashes
+
+    def account_worker(account, txs):
+        q = account["signatures"]
+        while True:
+            tx_signed = q.get()
+            send_transaction(tx_signed, txs)
+            q.task_done()
+
+    for account in accounts.values():
+        thread = Thread(target=account_worker, args=(account, txs))
+        thread.daemon = True
+        thread.start()
+    print("\n> %d account worker threads started" % len(accounts))
+
+    for account in accounts.values():
+        q = account["signatures"]
+        q.join()
+    print("\n> all accounts broadcasted their transactions")
+
+    return txs
+
+def storage_set(arg, account, signatures=None):
     """
     call the storage.set(uint x) method using the web3 method
     """
-    print(".", end=" ")
     storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
         'nonce': account["nonce"].increment(w3),
         'chainId': CHAIN_ID
     })
-    signed = w3.eth.account.signTransaction(
+    tx_signed = w3.eth.account.signTransaction(
         storage_set,
         private_key=account["private_key"]
     )
-    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
+
+    if signatures is not None:
+        signatures.put(tx_signed)
+    return tx_signed
+
+def send_transaction(tx_signed, hashes=None):
+    tx_hash = w3.toHex(w3.eth.sendRawTransaction(tx_signed.rawTransaction))
 
     if hashes is not None:
         hashes.append(tx_hash)
     return tx_hash
 
-
 def init_account_balances(w3, accounts):
-    print("\n > Transfering funds to %d accounts" % len(accounts))
+    print("\n> Transfering funds to %d accounts" % len(accounts))
     sender = accounts.get(0)
-    for account in accounts.values():
-        transfer_funds(w3, sender, account, 5)
-
-
-def many_transactions_threaded(num_tx, account):
-    """
-    submit many transactions multi-threaded.
-
-    N.B.: 1 thread / transaction 
-          -- machine can run out of threads, then crash
-    """
-    line = "\n> send %d transactions by account: %s, multi-threaded, one thread per tx:\n"
-    print(line % (num_tx, account["address"]))
-
     threads = []
-    txs = []  # container to keep all transaction hashes
-    for i in range(num_tx):
-        thread = Thread(target=storage_set, args=(i, account, txs))
+
+    for account in accounts.values():
+        thread = Thread(target=transfer_funds, args=(w3, sender, account, 5))
         threads.append(thread)
-    print("\n> %d transaction threads created" % len(threads))
 
     for thread in threads:
         thread.start()
-        sys.stdout.flush()
-    print("\n> all threads started")
 
     for thread in threads:
         thread.join()
-    print("\n> all threads ended")
-
-    return txs
-
-
-def many_transactions_threaded_queue(num_tx, num_worker_threads, account):
-    """
-    submit many transactions multi-threaded, with size limited threading Queue
-    """
-    line = "send %d transactions by account: %d, via multi-threading queue with %s workers:\n"
-    print(line % (num_tx, num_worker_threads, account["address"]))
-
-    q = Queue()
-    txs = []  # container to keep all transaction hashes
-
-    def worker():
-        while True:
-            item = q.get()
-            storage_set(item, account, txs)
-            q.task_done()
-
-    for i in range(num_worker_threads):
-        thread = Thread(target=worker)
-        thread.daemon = True
-        thread.start()
-    print("\n> %d worker threads created and started" % num_worker_threads)
-
-    for i in range(num_tx):
-        q.put(i)
-    print("\n> %d items queued" % num_tx)
-
-    q.join()
-    print("\n> all items - done")
-    return txs
-
-
-def many_transactions_by_account(num_tx_per_account, accounts):
-    """
-    Submit a number of transactions per account.
-    Each account has a thread.
-    """
-    line = "%d accounts sending %d transactions each\n"
-    print(line % (len(accounts), num_tx_per_account))
-
-    txs = []  # container to keep all transaction hashes
-    threads = []
-
-    def account_worker(account, txs):
-        for i in range(num_tx_per_account):
-            storage_set(i, account, txs)
-
-    for account in accounts.values():
-        thread = Thread(target=account_worker, args=(account, txs))
-        threads.append(thread)
-    print("\n> %d account worker threads created" % len(threads))
-
-    for thread in threads:
-        thread.start()
-        sys.stdout.flush()
-    print("\n> all threads started")
-
-    for thread in threads:
-        thread.join()
-    print("\n> all threads ended")
-
-    return txs
-
 
 def get_sample(txs, tx_ranges=100, timeout=60):
     """
@@ -230,53 +236,6 @@ def check_argv():
         print("at least transactions_count, e.g.")
         print("%s 1000" % sys.argv[0])
         exit()
-
-
-def send():
-    """
-    sends many transactions to contract.
-    choose algorithm depending on 2nd CLI argument.
-    """
-    print("\nCurrent blockNumber = ", w3.eth.blockNumber)
-    transactions_count = int(sys.argv[1])
-
-    # choose algorithm depending on 2nd CLI argument:
-    if sys.argv[2] == "threaded1":
-        # Init only 1 account to send all the transactions
-        account = init_accounts(w3, 1).get(0)
-        init_experiment_data()
-        txs = many_transactions_threaded(transactions_count, account)
-    elif sys.argv[2] == "threaded2":
-        num_workers = 25
-        if len(sys.argv) == 4:
-            try:
-                num_workers = int(sys.argv[3])
-            except:
-                pass
-        # Init only 1 account to send all the transactions
-        account = init_accounts(w3, 1).get(0)
-        init_experiment_data()
-        txs = many_transactions_threaded_queue(
-            transactions_count, num_workers, account)
-    elif sys.argv[2] == "accounts":
-        num_accounts = 20
-        if len(sys.argv) == 4:
-            try:
-                num_accounts = int(sys.argv[3])
-            except:
-                pass
-        accounts = init_accounts(w3, num_accounts)
-        init_account_balances(w3, accounts)
-        init_experiment_data()
-        txs = many_transactions_by_account(transactions_count, accounts)
-
-    else:
-        print("Nope. Choice '%s'" % sys.argv[2], "not recognized.")
-        exit()
-
-    print("%d transaction hashes recorded" % len(txs))
-    return txs
-
 
 if __name__ == '__main__':
     global w3, STORAGE_CONTRACT
