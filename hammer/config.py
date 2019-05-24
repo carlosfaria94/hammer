@@ -18,6 +18,9 @@ GAS_PRICE = 5000000000
 
 CHAIN_ID = 2019  # Network or chain id
 
+BATCH_TX = True # Should transactions sent in batchs?
+TX_PER_BATCH = 400 # Number of transactions per batch. Should not pass the node TX pool
+
 # contract files:
 FILE_CONTRACT_SOURCE = "contract.sol"
 FILE_CONTRACT_ABI = "contract-abi.json"

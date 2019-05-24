@@ -5,15 +5,17 @@
 import sys
 import time
 import json
-from threading import Thread
+from threading import Thread, get_ident
 from queue import Queue
+
+import requests
 
 # extend path for imports:
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END
+from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END, BATCH_TX, TX_PER_BATCH
 from deploy import init_contract
 from utils import init_web3, init_accounts, transfer_funds
 from check_control import get_receipts_queue, has_successful_transactions
@@ -56,10 +58,10 @@ def create_signed_transactions(num_tx_per_account, accounts):
     threads = []
 
     def sign_worker(account, index):
-        acc_signatures = Queue()
+        signed_txs = []
         for i in range(num_tx_per_account):
-            storage_set(i, account, acc_signatures)
-        account["signatures"] = acc_signatures
+            storage_set(i, account, signed_txs)
+        account["signed_txs"] = signed_txs
         accounts[index] = account
 
     for index, account in accounts.items():
@@ -80,32 +82,43 @@ def broadcast_transactions(num_tx_per_account, accounts):
     Consumes signed transactions from a Queue, to broadcast each one per account.
     Each account has a thread.
     """
-    line = "%d accounts broadcasting %d transactions each\n"
+    line = "> %d accounts broadcasting %d transactions each\n"
     print(line % (len(accounts), num_tx_per_account))
 
     txs = []  # container to keep all transaction hashes
-
+    threads = []
     def account_worker(account, txs):
-        q = account["signatures"]
+        signed_txs = account["signed_txs"]
         while True:
-            tx_signed = q.get()
-            send_transaction(tx_signed, txs)
-            q.task_done()
+            if not signed_txs:
+                line = "> No more signed transactions (%d) for account with address: %s"
+                print(line % (len(signed_txs), account["address"]))
+                break
+            if BATCH_TX:
+                batch_request = build_batch_call(signed_txs[:TX_PER_BATCH])
+                send_batch(batch_request, txs)
+                # Remove signed transactions sent
+                del signed_txs[:TX_PER_BATCH]
+            else:
+                tx_signed = signed_txs.pop(0)
+                send_transaction(tx_signed, txs)
 
     for account in accounts.values():
         thread = Thread(target=account_worker, args=(account, txs))
-        thread.daemon = True
-        thread.start()
+        threads.append(thread)
+
+    for t in threads:
+        t.start()
+        sys.stdout.flush()
     print("\n> %d account worker threads started" % len(accounts))
 
-    for account in accounts.values():
-        q = account["signatures"]
-        q.join()
-    print("\n> all accounts broadcasted their transactions")
+    for thread in threads:
+        thread.join()
+    print("\n> All accounts broadcasted their transactions\n")
 
     return txs
 
-def storage_set(arg, account, signatures=None):
+def storage_set(arg, account, signed_txs=None):
     """
     call the storage.set(uint x) method using the web3 method
     """
@@ -120,8 +133,8 @@ def storage_set(arg, account, signatures=None):
         private_key=account["private_key"]
     )
 
-    if signatures is not None:
-        signatures.put(tx_signed)
+    if signed_txs is not None:
+        signed_txs.append(tx_signed)
     return tx_signed
 
 def send_transaction(tx_signed, hashes=None):
@@ -130,6 +143,29 @@ def send_transaction(tx_signed, hashes=None):
     if hashes is not None:
         hashes.append(tx_hash)
     return tx_hash
+
+def send_batch(batch_request, hashes=None):
+    res = requests.post(
+        RPC_NODE_SEND,
+        json=batch_request,
+        headers={'Content-type': 'application/json'}
+    )
+    if hashes is not None:
+        for tx in res.json():
+            hashes.append(tx["result"])
+    return hashes
+
+def build_batch_call(signed_txs):
+    batch_request = []
+    for i, signed_tx in enumerate(signed_txs):
+        call = {
+            'jsonrpc': '2.0',
+            'method': 'eth_sendRawTransaction',
+            'params': [w3.toHex(signed_tx.rawTransaction)],
+            'id': i
+        }
+        batch_request.append(call)
+    return batch_request
 
 def init_account_balances(w3, accounts):
     print("\n> Transfering funds to %d accounts" % len(accounts))
