@@ -17,7 +17,7 @@ if __name__ == '__main__' and __package__ is None:
 
 from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END, BATCH_TX, TX_PER_BATCH, PMINT
 from deploy import init_contract
-from utils import init_web3, init_accounts, transfer_funds
+from utils import init_web3, init_accounts, transfer_funds, transfer_erc
 from check_control import get_receipts_queue, has_successful_transactions
 
 def send():
@@ -37,8 +37,7 @@ def send():
             except:
                 pass
         accounts = init_accounts(w3, num_accounts)
-        if not PMINT:
-            init_account_balances(w3, accounts)
+        init_account_balances(w3, accounts)
         accounts = create_signed_transactions(transactions_count, accounts)
         init_experiment_data()
         txs = broadcast_transactions(transactions_count, accounts)
@@ -126,7 +125,7 @@ def storage_set(arg, account, signed_txs=None):
     storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(w3),
+        'nonce': account["nonce"].increment(),
         'chainId': CHAIN_ID
     })
     tx_signed = w3.eth.account.signTransaction(
@@ -174,7 +173,10 @@ def init_account_balances(w3, accounts):
     threads = []
 
     for account in accounts.values():
-        thread = Thread(target=transfer_funds, args=(w3, sender, account, 5))
+        if PMINT:
+            thread = Thread(target=transfer_erc, args=(w3, sender, account))
+        else:
+            thread = Thread(target=transfer_funds, args=(w3, sender, account, 5))
         threads.append(thread)
 
     for thread in threads:

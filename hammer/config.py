@@ -23,6 +23,10 @@ TX_PER_BATCH = 400 # Number of transactions per batch. Should not pass the node 
 
 PMINT = True
 
+#erc20 files
+ERC20_ADDRESS = "0x7106080900f742599A3756943668610bA3e81BfC"
+ERC20_ABI = "erc20plus-abi.json"
+
 # contract files:
 FILE_CONTRACT_SOURCE = "contract.sol"
 FILE_CONTRACT_ABI = "contract-abi.json"

@@ -12,7 +12,7 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT
+from config import RPC_NODE_WATCH, FILE_LAST_EXPERIMENT, FILE_CONTRACT_ADDRESS, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN
 from deploy import load_contract
 from utils import init_web3, file_date
 
@@ -35,7 +35,7 @@ def wait_file(file=FILE_LAST_EXPERIMENT, interval=0.1):
     return
 
 def watch_contract():
-    address, _, _ = load_contract()
+    address, _, _ = load_contract(file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
     print("\n Last contract address: %s" % (address))
     return
 

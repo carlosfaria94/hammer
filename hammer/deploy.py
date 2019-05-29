@@ -11,7 +11,7 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from utils import init_web3, init_accounts
+from utils import init_web3, init_accounts, load_contract
 from config import RPC_NODE_SEND, TIMEOUT_DEPLOY, FILE_CONTRACT_ABI, FILE_CONTRACT_BIN, FILE_CONTRACT_ADDRESS, GAS_DEPLOY, GAS_PRICE, CHAIN_ID
 
 
@@ -20,12 +20,12 @@ def deploy(account, timeout=TIMEOUT_DEPLOY):
     deploys contract, waits for receipt, returns address
     """
     before = time.time()
-    _, abi, contract_bin = load_contract()
+    _, abi, contract_bin = load_contract(file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
     storage_contract = w3.eth.contract(abi=abi, bytecode=contract_bin)
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS_DEPLOY,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(w3),
+        'nonce': account["nonce"].increment(),
         'chainId': CHAIN_ID
     })
     signed = w3.eth.account.signTransaction(contract_tx, account["private_key"])
@@ -63,25 +63,11 @@ def save_address(contract_address):
     json.dump({"address": contract_address}, open(FILE_CONTRACT_ADDRESS, 'w'))
 
 
-def load_contract(
-    file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN):
-    """
-    Load contract from disk. Returns: address, ABI and Bin from the contract
-    """
-    try:
-        contract_address = json.load(open(file_address, 'r'))["address"]
-    except FileNotFoundError:
-        contract_address = None
-    abi = json.load(open(file_abi, 'r'))
-    contract_bin = json.load(open(file_bin, 'r'))["bin"]
-    return contract_address, abi, contract_bin
-
-
 def init_contract(w3):
     """
     initialise contract object from address, stored in disk file by deploy.py
     """
-    contract_address, abi, _ = load_contract()
+    contract_address, abi, _ = load_contract(file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
     contract = w3.eth.contract(address=contract_address, abi=abi)
     return contract
 
