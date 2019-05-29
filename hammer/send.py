@@ -125,7 +125,7 @@ def storage_set(arg, account, signed_txs=None):
     storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(w3),
+        'nonce': account["nonce"].increment(),
         'chainId': CHAIN_ID
     })
     tx_signed = w3.eth.account.signTransaction(

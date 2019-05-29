@@ -25,7 +25,7 @@ def deploy(account, timeout=TIMEOUT_DEPLOY):
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS_DEPLOY,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(w3),
+        'nonce': account["nonce"].increment(),
         'chainId': CHAIN_ID
     })
     signed = w3.eth.account.signTransaction(contract_tx, account["private_key"])

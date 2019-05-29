@@ -38,7 +38,7 @@ class AtomicNonce:
         self.value = w3.eth.getTransactionCount(self.address) - 1
         self._lock = Lock()
 
-    def increment(self, w3, num=1):
+    def increment(self, num=1):
         """Atomically increment the nonce by num (default 1) and return the
         new value.
         """

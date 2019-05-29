@@ -107,7 +107,7 @@ def transfer_funds(w3, sender, receiver, amount):
             'value': amount,
             'gas': GAS,
             'gasPrice': GAS_PRICE,
-            'nonce': sender["nonce"].increment(w3),
+            'nonce': sender["nonce"].increment(),
             'chainId': CHAIN_ID
         }
         signed = w3.eth.account.signTransaction(tx, sender["private_key"])
@@ -120,7 +120,7 @@ def transfer_erc(w3, sender, receiver, amount=10000):
     transfer_erc20 = erc20.functions.transfer(to=receiver["address"], value=amount).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': sender["nonce"].increment(w3),
+        'nonce': sender["nonce"].increment(),
         'chainId': CHAIN_ID
     })
 
