@@ -15,7 +15,7 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END, BATCH_TX, TX_PER_BATCH
+from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END, BATCH_TX, TX_PER_BATCH, PMINT
 from deploy import init_contract
 from utils import init_web3, init_accounts, transfer_funds
 from check_control import get_receipts_queue, has_successful_transactions
@@ -37,7 +37,8 @@ def send():
             except:
                 pass
         accounts = init_accounts(w3, num_accounts)
-        init_account_balances(w3, accounts)
+        if not PMINT:
+            init_account_balances(w3, accounts)
         accounts = create_signed_transactions(transactions_count, accounts)
         init_experiment_data()
         txs = broadcast_transactions(transactions_count, accounts)
