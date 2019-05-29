@@ -12,7 +12,7 @@ if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from crypto import HDPrivateKey, HDKey
-from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID, ERC20
+from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID, ERC20_ADDRESS, ERC20_ABI
 from atomic_nonce import AtomicNonce
 
 class Error(Exception):
@@ -113,21 +113,35 @@ def transfer_funds(w3, sender, receiver, amount):
         signed = w3.eth.account.signTransaction(tx, sender["private_key"])
         tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
-def transfer_erc(arg, sender, receiver, amount, erc20=ERC20):
-    """
-    call the storage.set(uint x) method using the web3 method
-    """
-    storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
+def transfer_erc(w3, sender, receiver, amount=10000):
+    _, abi, _ = load_contract(file_address=None, file_abi=ERC20_ABI, file_bin=None)
+    erc20 = w3.eth.contract(address=ERC20_ADDRESS, abi=abi)
+
+    transfer_erc20 = erc20.functions.transfer(to=receiver["address"], value=amount).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
-        'nonce': account["nonce"].increment(w3),
+        'nonce': sender["nonce"].increment(w3),
         'chainId': CHAIN_ID
     })
-    tx_signed = w3.eth.account.signTransaction(
-        storage_set,
-        private_key=account["private_key"]
-    )
 
-    if signed_txs is not None:
-        signed_txs.append(tx_signed)
-    return tx_signed
+    signed = w3.eth.account.signTransaction(transfer_erc20, sender["private_key"])
+    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
+
+def load_contract(file_abi, file_address=None, file_bin=None):
+    """
+    Load contract from disk. Returns: address, ABI and Bin from the contract
+    """
+    if file_address is not None:
+        try:
+            contract_address = json.load(open(file_address, 'r'))["address"]
+        except FileNotFoundError:
+            contract_address = None
+    else:
+        contract_address = None
+    abi = json.load(open(file_abi, 'r'))
+    if file_bin is not None:
+        contract_bin = json.load(open(file_bin, 'r'))["bin"]
+    else:
+        contract_bin = None
+
+    return contract_address, abi, contract_bin

@@ -22,7 +22,10 @@ BATCH_TX = False # Should transactions sent in batchs?
 TX_PER_BATCH = 400 # Number of transactions per batch. Should not pass the node TX pool
 
 PMINT = True
-ERC20 = "0x7106080900f742599A3756943668610bA3e81BfC"
+
+#erc20 files
+ERC20_ADDRESS = "0x7106080900f742599A3756943668610bA3e81BfC"
+ERC20_ABI = "erc20plus-abi.json"
 
 # contract files:
 FILE_CONTRACT_SOURCE = "contract.sol"
