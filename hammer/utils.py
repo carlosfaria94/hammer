@@ -12,7 +12,7 @@ if __name__ == '__main__' and __package__ is None:
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 from crypto import HDPrivateKey, HDKey
-from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
+from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID, ERC20
 from atomic_nonce import AtomicNonce
 
 class Error(Exception):
@@ -112,3 +112,22 @@ def transfer_funds(w3, sender, receiver, amount):
         }
         signed = w3.eth.account.signTransaction(tx, sender["private_key"])
         tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
+
+def transfer_erc(arg, sender, receiver, amount, erc20=ERC20):
+    """
+    call the storage.set(uint x) method using the web3 method
+    """
+    storage_set = STORAGE_CONTRACT.functions.set(x=arg).buildTransaction({
+        'gas': GAS,
+        'gasPrice': GAS_PRICE,
+        'nonce': account["nonce"].increment(w3),
+        'chainId': CHAIN_ID
+    })
+    tx_signed = w3.eth.account.signTransaction(
+        storage_set,
+        private_key=account["private_key"]
+    )
+
+    if signed_txs is not None:
+        signed_txs.append(tx_signed)
+    return tx_signed
