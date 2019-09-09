@@ -214,7 +214,7 @@ def store_experiment_data(success, num_txs, block_from, block_to, empty_blocks, 
         },
         "node": {
             "rpc_address": RPC_NODE_SEND,
-            "web3.version.node": w3.version.node
+            "web3.clientVersion": w3.clientVersion
         }
     }
 
