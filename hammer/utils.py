@@ -31,12 +31,12 @@ def print_versions():
 def init_web3(RPCaddress=None):
     w3 = Web3(HTTPProvider(RPCaddress, request_kwargs={'timeout': 120}))
     from web3.middleware import geth_poa_middleware
-    w3.middleware_stack.inject(geth_poa_middleware, layer=0)
+    w3.middleware_onion.inject(geth_poa_middleware, layer=0)
 
     print_versions()
     print("web3 connection established, blockNumber =",
           w3.eth.blockNumber, end=", ")
-    print("node version string = ", w3.version.node)
+    print("node version string = ", w3.clientVersion)
     return w3
 
 
@@ -113,11 +113,11 @@ def transfer_funds(w3, sender, receiver, amount):
         signed = w3.eth.account.signTransaction(tx, sender["private_key"])
         tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
-def transfer_erc(w3, sender, receiver, amount=10000):
+def transfer_erc(w3, sender, receiver, amount=10000000000000):
     _, abi, _ = load_contract(file_address=None, file_abi=ERC20_ABI, file_bin=None)
     erc20 = w3.eth.contract(address=ERC20_ADDRESS, abi=abi)
 
-    transfer_erc20 = erc20.functions.transfer(to=receiver["address"], value=amount).buildTransaction({
+    transfer_erc20 = erc20.functions.transfer(recipient=receiver["address"], amount=amount).buildTransaction({
         'gas': GAS,
         'gasPrice': GAS_PRICE,
         'nonce': sender["nonce"].increment(),

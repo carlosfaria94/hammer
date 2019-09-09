@@ -12,19 +12,19 @@ MNEMONIC = ""
 
 TIMEOUT_DEPLOY = 300
 
-GAS = 50000 # Estimate gas to change the contract Storage
+GAS = 100000 # Estimate gas to change the contract Storage
 GAS_DEPLOY = 200000 # Estimate gas to deploy the contract Storage
-GAS_PRICE = 20000000000
+GAS_PRICE = 10000
 
 CHAIN_ID = 2019  # Network or chain id
 
-BATCH_TX = False # Should transactions sent in batchs?
+BATCH_TX = True # Should transactions sent in batchs?
 TX_PER_BATCH = 400 # Number of transactions per batch. Should not pass the node TX pool
 
 PMINT = True
 
 #erc20 files
-ERC20_ADDRESS = "0x7106080900f742599A3756943668610bA3e81BfC"
+ERC20_ADDRESS = "0x0000000000000000000000000000000000002070"
 ERC20_ABI = "erc20plus-abi.json"
 
 # contract files:

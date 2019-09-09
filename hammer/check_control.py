@@ -82,7 +82,7 @@ def get_receipts_queue(w3, tx_hashes, timeout, num_worker_threads=8, ifPrint=Fal
     return tx_receipts
 
 
-def has_successful_transactions(w3, txs, sample_size=50, timeout=300):
+def has_successful_transactions(w3, txs, sample_size=100, timeout=300):
     """
     Makes sure that the transactions were actually successful, 
     and did not fail because e.g. running out of gas, etc.
