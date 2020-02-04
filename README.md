@@ -4,7 +4,7 @@ Fork from https://github.com/drandreaskrueger/chainhammer to work with Pantheon.
 
 ## Requirements
 
-- Python 3.6
+- Python >= 3.6
 
 ## Install dependencies using virtualenv
 
@@ -17,7 +17,7 @@ pip3 install -r requirements.txt
 
 ## Configuration
 
-On `hammer/config`:
+Create a `.env` with the following environment variables:
 
 - Set the `MNEMONIC`; used to initiate accounts and sign transactions
 - Set the `RPC_NODE_SEND`; node used to flood the network with transactions

@@ -13,6 +13,8 @@ setup(
         'rlp',
         'eth_utils',
         'two1',
+        'python-dotenv',
+        'autopep8',
     ],
     author='Carlos Faria',
     author_email='carlosfaria@pm.me',

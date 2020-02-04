@@ -95,8 +95,10 @@ def has_balance(w3, account):
     balance = w3.eth.getBalance(account["address"])
     balance = w3.fromWei(balance, 'ether')
     if balance >= 1:
+        print("Account {} already has balance".format(account["address"]))
         return True
     else:
+        print("Account {} does not have enough balance".format(account["address"]))
         return False
 
 def transfer_funds(w3, sender, receiver, amount):
@@ -113,7 +115,7 @@ def transfer_funds(w3, sender, receiver, amount):
         signed = w3.eth.account.signTransaction(tx, sender["private_key"])
         tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
-def transfer_erc(w3, sender, receiver, amount=10000000000000):
+""" def transfer_erc(w3, sender, receiver, amount=10000000000000):
     _, abi, _ = load_contract(file_address=None, file_abi=ERC20_ABI, file_bin=None)
     erc20 = w3.eth.contract(address=ERC20_ADDRESS, abi=abi)
 
@@ -125,7 +127,7 @@ def transfer_erc(w3, sender, receiver, amount=10000000000000):
     })
 
     signed = w3.eth.account.signTransaction(transfer_erc20, sender["private_key"])
-    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
+    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction)) """
 
 def load_contract(file_abi, file_address=None, file_bin=None):
     """
