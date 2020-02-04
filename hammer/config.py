@@ -2,28 +2,29 @@
 """
 @summary: settings
 """
-# The node that send the transactions (send.py)
-RPC_NODE_SEND = ""
-# The node that watch the transactions (measure_tps.py)
-RPC_NODE_WATCH = ""
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-# TODO: Insert MNEMONIC here to generate accounts
-MNEMONIC = ""
+# The node that send the transactions (send.py)
+RPC_NODE_SEND = os.getenv("RPC_NODE_SEND")
+# The node that watch the transactions (measure_tps.py)
+RPC_NODE_WATCH = os.getenv("RPC_NODE_WATCH")
+
+MNEMONIC = os.getenv("MNEMONIC")
 
 TIMEOUT_DEPLOY = 300
 
-GAS = 100000 # Estimate gas to change the contract Storage
-GAS_DEPLOY = 200000 # Estimate gas to deploy the contract Storage
-GAS_PRICE = 10000
+GAS = 100000  # Estimate gas to change the contract Storage
+GAS_DEPLOY = 200000  # Estimate gas to deploy the contract Storage
+GAS_PRICE = 20000000000
 
-CHAIN_ID = 2019  # Network or chain id
+CHAIN_ID = 2018  # Network or chain id
 
-BATCH_TX = True # Should transactions sent in batchs?
-TX_PER_BATCH = 400 # Number of transactions per batch. Should not pass the node TX pool
+BATCH_TX = False  # Should transactions sent in batchs?
+TX_PER_BATCH = 400  # Number of transactions per batch. Should not pass the node TX pool
 
-PMINT = True
-
-#erc20 files
+# erc20 files
 ERC20_ADDRESS = "0x0000000000000000000000000000000000002070"
 ERC20_ABI = "erc20plus-abi.json"
 

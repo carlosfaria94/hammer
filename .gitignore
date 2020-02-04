@@ -74,7 +74,7 @@ docs/_build/
 
 # VSCode
 
-.vscode
+.vscode/*
 
 # PyBuilder
 target/

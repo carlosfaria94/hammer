@@ -24,9 +24,8 @@ def has_tx_succeeded(tx_receipt):
 def get_receipt(w3, tx_hash, timeout, results):
     try:
         results[tx_hash] = w3.eth.waitForTransactionReceipt(tx_hash, timeout)
-    except web3.utils.threads.Timeout:
-        pass
-
+    except web3.exceptions.TimeExhausted:
+        print("Timeout when geting receipt")
 
 def get_receipts(w3, tx_hashes, timeout):
     """

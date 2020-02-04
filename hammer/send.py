@@ -15,9 +15,9 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END, BATCH_TX, TX_PER_BATCH, PMINT
+from config import RPC_NODE_SEND, GAS, GAS_PRICE, CHAIN_ID, FILE_LAST_EXPERIMENT, EMPTY_BLOCKS_AT_END, BATCH_TX, TX_PER_BATCH
 from deploy import init_contract
-from utils import init_web3, init_accounts, transfer_funds, transfer_erc
+from utils import init_web3, init_accounts, transfer_funds
 from check_control import get_receipts_queue, has_successful_transactions
 
 def send():
@@ -91,8 +91,8 @@ def broadcast_transactions(num_tx_per_account, accounts):
         signed_txs = account["signed_txs"]
         while True:
             if not signed_txs:
-                line = "> No more signed transactions (%d) for account with address: %s"
-                print(line % (len(signed_txs), account["address"]))
+                line = "> No more signed transactions for account with address: %s"
+                print(line % (account["address"]))
                 break
             if BATCH_TX:
                 batch_request = build_batch_call(signed_txs[:TX_PER_BATCH])
@@ -173,10 +173,7 @@ def init_account_balances(w3, accounts):
     threads = []
 
     for account in accounts.values():
-        if PMINT:
-            thread = Thread(target=transfer_erc, args=(w3, sender, account))
-        else:
-            thread = Thread(target=transfer_funds, args=(w3, sender, account, 5))
+        thread = Thread(target=transfer_funds, args=(w3, sender, account, 5))
         threads.append(thread)
 
     for thread in threads:
@@ -185,7 +182,7 @@ def init_account_balances(w3, accounts):
     for thread in threads:
         thread.join()
 
-def get_sample(txs, tx_ranges=100, timeout=60):
+def get_sample(txs, tx_ranges=50, timeout=60):
     """
     Also only a heuristic:
     Assuming the first 100 and the last 100 transaction hashes that had been added 
