@@ -35,7 +35,7 @@ def wait_file(file=FILE_LAST_EXPERIMENT, interval=0.1):
     return
 
 def watch_contract():
-    address, _, _ = load_contract(file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
+    address, _, _ = load_contract(file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN, file_address=FILE_CONTRACT_ADDRESS)
     print("\n Last contract address: %s" % (address))
     return
 

@@ -129,7 +129,7 @@ def transfer_funds(w3, sender, receiver, amount):
     signed = w3.eth.account.signTransaction(transfer_erc20, sender["private_key"])
     tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction)) """
 
-def load_contract(file_abi, file_address=None, file_bin=None):
+def load_contract(file_abi, file_bin, file_address=None):
     """
     Load contract from disk. Returns: address, ABI and Bin from the contract
     """
@@ -141,9 +141,6 @@ def load_contract(file_abi, file_address=None, file_bin=None):
     else:
         contract_address = None
     abi = json.load(open(file_abi, 'r'))
-    if file_bin is not None:
-        contract_bin = json.load(open(file_bin, 'r'))["bin"]
-    else:
-        contract_bin = None
+    contract_bin = json.load(open(file_bin, 'r'))["bin"]
 
     return contract_address, abi, contract_bin
