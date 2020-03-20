@@ -20,7 +20,7 @@ def deploy(account, timeout=TIMEOUT_DEPLOY):
     deploys contract, waits for receipt, returns address
     """
     before = time.time()
-    _, abi, contract_bin = load_contract(file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
+    _, abi, contract_bin = load_contract(file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
     storage_contract = w3.eth.contract(abi=abi, bytecode=contract_bin)
     contract_tx = storage_contract.constructor().buildTransaction({
         'gas': GAS_DEPLOY,
@@ -67,7 +67,7 @@ def init_contract(w3):
     """
     initialise contract object from address, stored in disk file by deploy.py
     """
-    contract_address, abi, _ = load_contract(file_address=FILE_CONTRACT_ADDRESS, file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN)
+    contract_address, abi, _ = load_contract(file_abi=FILE_CONTRACT_ABI, file_bin=FILE_CONTRACT_BIN, file_address=FILE_CONTRACT_ADDRESS)
     contract = w3.eth.contract(address=contract_address, abi=abi)
     return contract
 
