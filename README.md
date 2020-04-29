@@ -1,6 +1,6 @@
 # Hammer
 
-Fork from https://github.com/drandreaskrueger/chainhammer to work with Pantheon.
+Fork from https://github.com/drandreaskrueger/chainhammer to work with Hyperledger Besu.
 
 ## Requirements
 

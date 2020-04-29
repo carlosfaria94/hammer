@@ -24,10 +24,6 @@ CHAIN_ID = 2018  # Network or chain id
 BATCH_TX = False  # Should transactions sent in batchs?
 TX_PER_BATCH = 400  # Number of transactions per batch. Should not pass the node TX pool
 
-# erc20 files
-ERC20_ADDRESS = "0x0000000000000000000000000000000000002070"
-ERC20_ABI = "erc20plus-abi.json"
-
 # contract files:
 FILE_CONTRACT_SOURCE = "contract.sol"
 FILE_CONTRACT_ABI = "contract-abi.json"

@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+from atomic_nonce import AtomicNonce
+from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID
+from crypto import HDPrivateKey, HDKey
 import os
 import sys
 import json
@@ -11,9 +14,6 @@ if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
-from crypto import HDPrivateKey, HDKey
-from config import MNEMONIC, GAS, GAS_PRICE, CHAIN_ID, ERC20_ADDRESS, ERC20_ABI
-from atomic_nonce import AtomicNonce
 
 class Error(Exception):
     pass
@@ -25,7 +25,8 @@ class MethodNotExistentError(Error):
 
 def print_versions():
     from web3 import __version__ as web3version
-    print("versions: web3 %s, python %s" % (web3version, sys.version.replace("\n", "")))
+    print("versions: web3 %s, python %s" %
+          (web3version, sys.version.replace("\n", "")))
 
 
 def init_web3(RPCaddress=None):
@@ -91,6 +92,7 @@ def init_accounts(w3, how_many):
         }
     return accounts
 
+
 def has_balance(w3, account):
     balance = w3.eth.getBalance(account["address"])
     balance = w3.fromWei(balance, 'ether')
@@ -98,8 +100,10 @@ def has_balance(w3, account):
         print("Account {} already has balance".format(account["address"]))
         return True
     else:
-        print("Account {} does not have enough balance".format(account["address"]))
+        print("Account {} does not have enough balance".format(
+            account["address"]))
         return False
+
 
 def transfer_funds(w3, sender, receiver, amount):
     if not has_balance(w3, receiver):
@@ -115,19 +119,6 @@ def transfer_funds(w3, sender, receiver, amount):
         signed = w3.eth.account.signTransaction(tx, sender["private_key"])
         tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction))
 
-""" def transfer_erc(w3, sender, receiver, amount=10000000000000):
-    _, abi, _ = load_contract(file_address=None, file_abi=ERC20_ABI, file_bin=None)
-    erc20 = w3.eth.contract(address=ERC20_ADDRESS, abi=abi)
-
-    transfer_erc20 = erc20.functions.transfer(recipient=receiver["address"], amount=amount).buildTransaction({
-        'gas': GAS,
-        'gasPrice': GAS_PRICE,
-        'nonce': sender["nonce"].increment(),
-        'chainId': CHAIN_ID
-    })
-
-    signed = w3.eth.account.signTransaction(transfer_erc20, sender["private_key"])
-    tx_hash = w3.toHex(w3.eth.sendRawTransaction(signed.rawTransaction)) """
 
 def load_contract(file_abi, file_bin, file_address=None):
     """
